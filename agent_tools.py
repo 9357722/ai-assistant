@@ -12,7 +12,7 @@ from langchain_core.tools import tool
 async def search_product_price(query: str) -> str:
     """查询商品价格。输入商品名称，从MySQL数据库返回各平台价格信息。"""
     conn = await aiomysql.connect(
-        host='mysql',
+        host='host.docker.internal',
         user='root',
         password='108045',
         db='product_db',
@@ -57,7 +57,7 @@ async def calculator(expression: str) -> str:
 async def web_search(query: str) -> str:
     """联网搜索最新信息。输入搜索关键词，返回搜索结果摘要。"""
     conn = await aiomysql.connect(
-        host='mysql',
+        host='host.docker.internal',
         user='root',
         password='108045',
         db='product_db',

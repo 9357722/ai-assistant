@@ -1,0 +1,268 @@
+================================================================
+   Docker Compose / API 鉴权 / Python 异步编程 — 阶段总结
+   日期：2026-05-21
+   项目：AI 智能商品比价助手
+================================================================
+
+================================================================
+一、Docker Compose
+================================================================
+
+1. 核心概念
+--------------------------------------------------------------
+docker-compose.yml  : 一个 YAML 文件定义所有服务，替代多条 docker run 命令
+service             : 一个容器就是一个服务（如 mysql、api）
+network             : Compose 自动创建网络，服务之间用【服务名】互相访问
+                     例：host='mysql' 替代 host='172.18.0.1'
+volume              : 数据卷，容器删了数据还在（如 mysql_data:/var/lib/mysql）
+depends_on          : 控制启动顺序，api 等 mysql 就绪后再启动
+healthcheck         : 健康检查，确保 MySQL 真正就绪，而不只是容器启动了
+
+
+2. 关键命令
+--------------------------------------------------------------
+docker compose up -d              后台启动所有服务
+docker compose down               停止并删除容器
+docker compose down -v            停止并删除容器+数据卷（数据会丢！谨慎）
+docker compose ps                 查看所有服务状态
+docker compose logs 服务名         查看指定服务日志
+docker compose restart 服务名      重启指定服务
+
+
+3. docker-compose.yml 关键配置示例
+--------------------------------------------------------------
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: 108045
+      MYSQL_DATABASE: product_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  首次启动自动建表
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy        等 MySQL 健康后再启动
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+
+
+4. 本项目踩过的坑
+--------------------------------------------------------------
+【坑1】port 3306 already in use
+  原因：Windows 本地 MySQL 占着 3306 端口
+  解决：net stop MySQL80 或改端口映射
+
+【坑2】version is obsolete 警告
+  原因：version: "3.8" 在新版 Compose 中已废弃
+  解决：删除 version 行（只是警告，不影响运行）
+
+【坑3】中文查询返回乱码
+  原因：init.sql 执行时字符集不对
+  解决：init.sql 顶部加 SET NAMES utf8mb4; Python 连接加 use_unicode=True
+
+【坑4】api 不等 mysql 就绪就启动
+  原因：depends_on 默认只等容器启动，不等服务就绪
+  解决：加 healthcheck + condition: service_healthy
+
+【坑5】重建镜像后缺少依赖
+  原因：用 docker exec pip install 装了依赖，但没写进 requirements.txt
+  解决：每次加新依赖必须同步更新 requirements.txt
+
+
+5. 手动启动 vs Docker Compose
+--------------------------------------------------------------
+              手动 docker run              Docker Compose
+启动方式      多条命令                     一条 docker compose up -d
+网络互访      手动查网关 IP(172.18.0.1)    直接用服务名(mysql)
+数据持久化    手动 -v 挂载                 写在 volumes 里统一管理
+启动顺序      手动等 MySQL 启动             depends_on + healthcheck 自动等
+
+
+================================================================
+二、API 鉴权与安全
+================================================================
+
+1. 核心概念
+--------------------------------------------------------------
+API Key           : 一个字符串密钥，客户端每次请求必须带上
+请求头(Header)    : Key 放在 HTTP 请求头里，如 X-API-Key: sk-xxx
+依赖注入(Depends) : FastAPI 机制，把验证逻辑抽出来，路由自动调用
+限流(Rate Limit)  : 限制每个 Key 在固定时间内请求次数，防刷
+HTTP 状态码       : 401=未认证  429=请求过多  200=成功
+
+
+2. 关键代码
+--------------------------------------------------------------
+【验证函数】
+VALID_API_KEYS = {"sk-agent-key-001", "sk-agent-key-002"}
+
+def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
+    if x_api_key not in VALID_API_KEYS:
+        raise HTTPException(status_code=401, detail="无效的 API Key")
+    return x_api_key
+
+【限流函数】
+rate_limit_store = defaultdict(list)
+
+def check_rate_limit(api_key: str, max_requests=30, window=60):
+    now = time.time()
+    rate_limit_store[api_key] = [t for t in rate_limit_store[api_key]
+                                  if now - t < window]
+    if len(rate_limit_store[api_key]) >= max_requests:
+        raise HTTPException(status_code=429, detail="请求过于频繁")
+    rate_limit_store[api_key].append(now)
+
+【加到路由上】
+@app.post("/agent")
+async def agent_chat(request: ChatRequest,
+                     api_key: str = Depends(verify_api_key)):
+    check_rate_limit(api_key)
+    # ... 业务逻辑 ...
+
+
+3. 测试命令
+--------------------------------------------------------------
+无 Key → 401
+curl -X POST http://localhost:8000/agent
+  -H "Content-Type: application/json"
+  -d '{"question":"test"}'
+
+正确 Key → 200
+curl -X POST http://localhost:8000/agent
+  -H "Content-Type: application/json"
+  -H "X-API-Key: sk-agent-key-001"
+  -d '{"question":"test"}'
+
+错误 Key → 401
+curl -X POST http://localhost:8000/agent
+  -H "Content-Type: application/json"
+  -H "X-API-Key: wrong-key"
+  -d '{"question":"test"}'
+
+
+4. 本项目踩过的坑
+--------------------------------------------------------------
+【坑1】Field required
+  原因：请求没带 X-API-Key 头
+  解决：加 -H "X-API-Key: sk-agent-key-001"
+
+【坑2】无效的 API Key
+  原因：Key 不在白名单里
+  解决：确认 Key 拼写，或把新 Key 加到 VALID_API_KEYS
+
+【坑3】请求过于频繁
+  原因：超过每分钟限额
+  解决：调大 max_requests 或等窗口重置
+
+
+5. 安全原则
+--------------------------------------------------------------
+Key 不进代码            : Key 存在环境变量或外部配置中
+限流必加                : 防止恶意刷接口消耗 API 额度
+生产环境 Key 应存数据库  : 白名单写死在代码里只适合开发/测试
+日志不记录 Key          : 防止日志泄露敏感信息
+
+
+================================================================
+三、Python 异步编程
+================================================================
+
+1. 核心概念对比
+--------------------------------------------------------------
+          同步                        异步
+函数定义  def                         async def
+等待方式  阻塞，等完才走              await 挂起，去处理别的请求
+数据库    pymysql                     aiomysql
+HTTP     requests                    httpx.AsyncClient
+性能      一次一个请求               同时处理多个请求
+
+比喻：同步=单窗口排队  异步=多窗口同时办理
+
+
+2. 关键代码对照
+--------------------------------------------------------------
+【同步版（旧）】
+@tool
+def search_product_price(query: str) -> str:
+    conn = pymysql.connect(host='mysql', ...)
+    cursor = conn.cursor()
+    cursor.execute(sql, params)
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+【异步版（新）】
+@tool
+async def search_product_price(query: str) -> str:
+    conn = await aiomysql.connect(host='mysql', ...)
+    async with conn.cursor() as cursor:
+        await cursor.execute(sql, params)
+        rows = await cursor.fetchall()
+    conn.close()
+
+【Agent 调用】
+同步：result = agent_executor.invoke(...)
+异步：result = await agent_executor.ainvoke(...)
+
+
+3. 额外依赖（requirements.txt 加）
+--------------------------------------------------------------
+aiomysql
+cryptography
+
+
+4. 本项目踩过的坑
+--------------------------------------------------------------
+【坑1】No module named 'aiomysql'
+  原因：用 docker exec pip install 装了但没写进 requirements.txt
+  解决：重建镜像前必须更新 requirements.txt
+
+【坑2】'cryptography' package is required
+  原因：aiomysql 连接 MySQL 8.0 需要 cryptography
+  解决：requirements.txt 加 cryptography
+
+【坑3】StructuredTool does not support sync invocation
+  原因：工具是 async def 但用同步 invoke 调用
+  解决：改成 await agent_executor.ainvoke(...)
+
+
+5. 异步调用链完整流程
+--------------------------------------------------------------
+用户请求
+  → FastAPI async def 路由
+    → await verify_api_key         异步验证
+    → await agent_executor.ainvoke 异步 Agent
+      → await search_product_price 异步工具
+        → await aiomysql.connect   异步数据库连接
+        → await cursor.execute     异步查询
+        → await cursor.fetchall    异步获取结果
+  → 返回结果
+
+
+================================================================
+四、跨模块速查表
+================================================================
+
+场景                      命令/代码
+──────────────────────────────────────────────────────────
+启动 Compose              docker compose up -d
+停止 Compose              docker compose down
+停止+删数据卷              docker compose down -v
+查看服务状态               docker compose ps
+查看容器日志               docker logs 容器名 --tail 30
+测试鉴权接口               curl ... -H "X-API-Key: sk-agent-key-001" -d '{...}'
+设置环境变量               set DEEPSEEK_API_KEY=sk-xxx
+一键重建                   docker compose down && docker build -t ai-assistant:slim . && docker compose up -d
+检查端口占用               netstat -ano | findstr ":3306"
+强制终止进程               taskkill /PID 进程ID /F
+
+================================================================

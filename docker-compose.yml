@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  # ========== MySQL 数据库 ==========
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 108045
+      MYSQL_DATABASE: product_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql            # 数据持久化
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # 自动建表
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========== AI 比价 API 服务 ==========
+  api:
+    image: ai-assistant:slim
+    container_name: ai-assistant
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      OPENAI_API_KEY: ${DEEPSEEK_API_KEY}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "sleep 5 && uvicorn api_server:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  mysql_data:

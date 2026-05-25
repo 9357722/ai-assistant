@@ -1,0 +1,47 @@
+-- MySQL dump 10.13  Distrib 8.0.46, for Win64 (x86_64)
+--
+-- Host: localhost    Database: product_db
+-- ------------------------------------------------------
+-- Server version	8.0.46
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Dumping data for table `products`
+--
+
+LOCK TABLES `products` WRITE;
+/*!40000 ALTER TABLE `products` DISABLE KEYS */;
+INSERT INTO `products` (`id`, `name`, `price`, `platform`, `created_at`) VALUES (1,'蓝牙耳机 Pro',159.00,'京东','2026-05-13 07:41:05'),(2,'蓝牙耳机 Lite',59.90,'拼多多','2026-05-13 07:41:05'),(4,'iPhone 17 Pro',7999.00,'京东','2026-05-14 02:55:51'),(5,'iPhone 17 Pro',7899.00,'淘宝','2026-05-14 02:55:51'),(6,'华为Mate 70 Pro',6999.00,'京东','2026-05-14 02:55:51'),(7,'华为Mate 70 Pro',6899.00,'拼多多','2026-05-14 02:55:51'),(8,'红米K80',2499.00,'淘宝','2026-05-14 02:55:51'),(9,'小米14',3999.00,'京东','2026-05-14 08:45:42'),(10,'小米14',3899.00,'淘宝','2026-05-14 08:46:00');
+/*!40000 ALTER TABLE `products` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping data for table `market_news`
+--
+
+LOCK TABLES `market_news` WRITE;
+/*!40000 ALTER TABLE `market_news` DISABLE KEYS */;
+INSERT INTO `market_news` (`id`, `keyword`, `content`) VALUES (1,'手机行情','2026年5月：华为Mate 70 Pro均价6999元，iPhone 17 Pro均价7999元，红米K80均价2499元。');
+/*!40000 ALTER TABLE `market_news` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-05-14 17:09:27

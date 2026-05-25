@@ -1,0 +1,9 @@
+ai_env
+*.tar
+*.zip
+*.tar.gz
+__pycache__
+.git
+my_vectordb
+*.bat
+test_*

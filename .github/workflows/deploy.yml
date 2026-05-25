@@ -1,0 +1,41 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 构建 Docker 镜像
+        run: docker build -t ai-assistant:slim .
+
+      - name: 保存镜像为 tar
+        run: docker save ai-assistant:slim -o ai-slim.tar
+
+      - name: 上传文件到 ECS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          password: ${{ secrets.ECS_KEY }}
+          source: "ai-slim.tar,docker-compose.yml,init.sql"
+          target: "/root/"
+
+      - name: 在 ECS 上部署
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          password: ${{ secrets.ECS_KEY }}
+          script: |
+            cd /root
+            export DEEPSEEK_API_KEY="${{ secrets.DEEPSEEK_API_KEY }}"
+            export OPENAI_API_KEY="${{ secrets.DEEPSEEK_API_KEY }}"
+            docker compose down || true
+            docker load -i ai-slim.tar
+            docker compose up -d

@@ -1,0 +1,223 @@
+================================================================
+        CI/CD (GitHub Actions) / 多 Agent 协作 — 阶段总结
+        日期：2026-05-26
+        项目：AI 智能商品比价助手
+================================================================
+
+================================================================
+一、CI/CD（GitHub Actions 自动部署）
+================================================================
+
+1. 核心概念
+--------------------------------------------------------------
+CI/CD                : 持续集成/持续部署，代码推送后自动构建、测试、部署
+GitHub Actions       : GitHub 自带的 CI/CD 工具，通过 .yml 工作流文件定义流程
+Workflow             : 工作流，定义自动化流程的文件（.github/workflows/deploy.yml）
+Job                  : 工作流中的一个任务，可包含多个 Step
+Step                 : 任务中的一个步骤，可以执行命令或使用现成的 Action
+Secrets              : GitHub 仓库中加密存储的敏感信息（如 Key、密码、IP）
+Self-hosted Runner   : 自己服务器上运行的执行器（本项目没用，用的 GitHub 提供的）
+appleboy/ssh-action  : 第三方 Action，用于通过 SSH 在远程服务器执行命令
+appleboy/scp-action  : 第三方 Action，用于通过 SCP 上传文件到远程服务器
+
+
+2. 工作流文件结构（deploy.yml）
+--------------------------------------------------------------
+name: Deploy to ECS          # 工作流名称
+on:                          # 触发条件
+  push:
+    branches: [main]         # main 分支有推送时触发
+jobs:
+  deploy:                    # 任务名称
+    runs-on: ubuntu-latest   # 运行环境
+    steps:                   # 步骤列表
+      - name: 检出代码
+        uses: actions/checkout@v4
+      - name: 在 ECS 上部署
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          password: ${{ secrets.ECS_KEY }}
+          script: |
+            cd /root/ai-assistant
+            git pull origin main
+            export DEEPSEEK_API_KEY="${{ secrets.DEEPSEEK_API_KEY }}"
+            docker build -t ai-assistant:slim .
+            docker compose down || true
+            docker compose up -d
+
+
+3. Secrets 配置
+--------------------------------------------------------------
+在 GitHub 仓库 → Settings → Secrets and variables → Actions 中添加：
+ECS_HOST          : 120.55.95.8
+ECS_USER          : root
+ECS_KEY           : ECS root 密码
+DEEPSEEK_API_KEY  : sk-你的DeepSeek Key
+
+
+4. 本项目踩过的坑
+--------------------------------------------------------------
+【坑1】推送代码时 SSH 连接断开（kex_exchange_identification）
+  原因：代理软件（FlClash）干扰 SSH 22 端口
+  解决：关闭代理或改用 HTTPS + Token 推送
+
+【坑2】推送超大文件被 GitHub 拒绝（RPC failed, 2.24 GiB）
+  原因：Git 历史中包含 .tar 镜像包等大文件
+  解决：.gitignore 排除 *.tar、*.zip，git reset --soft 清理历史后强制推送
+
+【坑3】GitHub Actions 构建时 DNS 解析失败（no such host）
+  原因：ECS 上 Docker 的镜像加速器 docker.mirrors.aliyuncs.com 无法解析
+  解决：修改 /etc/docker/daemon.json，替换为可用的镜像源列表
+
+【坑4】Personal Access Token 缺少 workflow 权限
+  原因：Token 创建时没有勾选 workflow 权限
+  解决：重新生成 Token 并勾选 workflow 权限
+
+【坑5】ECS 上 Docker 拉取 mysql:8.0 超时
+  原因：ECS 网络从 Docker Hub 拉取大镜像速度太慢
+  解决：docker-compose.yml 改为使用宿主机 MySQL，不再拉取 MySQL 镜像
+
+【坑6】ECS DNS 彻底失效（nslookup 也失败）
+  原因：系统 DNS 配置被污染或 VPN 干扰
+  解决：修改 /etc/systemd/resolved.conf 和 /etc/resolv.conf，
+        添加 100.100.2.136、8.8.8.8 等公共 DNS
+
+
+5. CI/CD 完整流程
+--------------------------------------------------------------
+本地 git push → GitHub Actions 触发
+  → 检出代码
+  → SSH 连接 ECS
+  → git pull 拉取最新代码
+  → docker build 构建镜像
+  → docker compose down + up -d 重启服务
+  → 部署完成
+
+
+================================================================
+二、多 Agent 协作
+================================================================
+
+1. 核心概念
+--------------------------------------------------------------
+多 Agent 协作 : 多个 AI Agent 分工合作完成复杂任务
+CrewAI        : 一个多 Agent 编排框架（最终未采用，兼容性问题太多）
+Prompt 多角色 : 在 System Prompt 里定义多个角色，让单个 Agent 分步扮演
+Agent         : 一个 AI 角色，有 role、goal、backstory
+Task          : 一个任务，指派给某个 Agent 执行
+Crew          : 把 Agent 和 Task 组装成协作团队
+Process       : 执行策略（sequential = 顺序执行）
+
+
+2. 单 Agent 多角色 Prompt 方案（最终采用）
+--------------------------------------------------------------
+原理：在 System Prompt 中明确要求 Agent 扮演多个角色，按顺序执行任务。
+      效果等同多 Agent 协作，但无额外依赖，稳定可控。
+
+示例 Prompt：
+"""
+你现在需要扮演两个角色来完成用户的问题：
+
+【角色1：商品价格查询员】
+- 使用 search_product_price 工具查询用户想了解的商品价格
+- 把各平台的价格清晰地列出来
+
+【角色2：价格分析师】
+- 根据查到的价格数据，对比不同平台的价格差异
+- 分析哪个平台最划算，给出明确的购买建议
+
+流程要求：
+1. 必须先以"查价员"身份调用工具查询
+2. 再以"分析师"身份对数据进行分析
+3. 最终输出要包含价格对比和购买建议两个部分
+"""
+
+
+3. CrewAI 尝试（已放弃，记录供参考）
+--------------------------------------------------------------
+尝试原因：想要真正的多 Agent 并行/串行协作
+放弃原因：与 DeepSeek API 兼容性差，依赖冲突多，调试成本高
+
+尝试过程中遇到的问题：
+- CrewAI 的 Tool 类型不兼容 LangChain 的 StructuredTool
+- CrewAI 的 @tool 装饰器导入路径因版本不同而变化
+- CrewAI 底层默认连接 OpenAI API，需要额外配置 LLM 参数
+- ChatOpenAI 配置 base_url 后仍报 Connection error
+- 容器内网络可达 DeepSeek（200 OK），但 CrewAI 内部无法正确使用
+
+
+4. 本项目踩过的坑
+--------------------------------------------------------------
+【坑1】ModuleNotFoundError: No module named 'crewai'
+  原因：依赖装了但没有写进 requirements.txt
+  解决：重建镜像前必须更新 requirements.txt
+
+【坑2】NameError: name 'Ture' is not defined
+  原因：拼写错误，verbose=Ture 应为 verbose=True
+  解决：仔细检查代码拼写
+
+【坑3】ImportError: cannot import name 'Tool' from 'crewai.tools'
+  原因：CrewAI 版本不同，Tool 类的导入路径不同
+  解决：改用 langchain_core.tools 的 Tool 或 CrewAI 的 @tool 装饰器
+
+【坑4】ValidationError: tools.0 Input should be a valid BaseTool
+  原因：CrewAI 不接受 LangChain 的 Tool 类型
+  解决：使用 CrewAI 原生的 @tool 装饰器
+
+【坑5】Connection error（CrewAI 无法连接 API）
+  原因：CrewAI 底层默认直连 OpenAI，未正确使用 DeepSeek 的 base_url
+  解决：即使显式配置 ChatOpenAI，仍有兼容问题，最终放弃 CrewAI
+
+【坑6】Event pairing mismatch（CrewAI 内部状态错误）
+  原因：CrewAI 框架版本不稳定或依赖冲突
+  解决：放弃 CrewAI，改用 Prompt 多角色方案
+
+【坑7】requirements.txt 中 cryptography 和 crewai 连在一起
+  原因：echo 追加时换行符丢失，两个包名拼成 cryptographycrewai
+  解决：手动编辑 requirements.txt，确保每个包占一行
+
+
+5. 最终方案架构对比
+--------------------------------------------------------------
+           多 Agent 框架（CrewAI）        Prompt 多角色（采用）
+依赖       需要额外框架                   零额外依赖
+稳定性     框架兼容性风险                 完全可控
+调试难度   高（黑盒）                     低（透明 Prompt）
+效果       多 Agent 串行协作             单 Agent 分步扮演，效果等同
+维护成本   高                             低
+
+
+6. 经验教训
+--------------------------------------------------------------
+- 新框架引入前先评估兼容性，不要被"时髦"带偏
+- Prompt 工程往往比复杂框架更稳定、更可控
+- 遇到框架持续报错时，果断放弃，用简单方案替代
+- 每次安装新依赖必须同步更新 requirements.txt
+- 拼写错误是最浪费时间但最容易避免的坑
+
+
+================================================================
+三、跨模块速查表
+================================================================
+
+场景                      命令/代码
+──────────────────────────────────────────────────────────
+触发 CI/CD                 git push origin main
+查看 Actions 状态          https://github.com/9357722/ai-assistant/actions
+手动重新运行               Actions 页面 → Re-run jobs
+测试 /crew 接口            curl -X POST http://localhost:8000/crew
+                            -H "X-API-Key: sk-agent-key-001"
+                            -d '{"question":"华为手机多少钱"}'
+修复 ECS DNS               sudo nano /etc/docker/daemon.json
+                            （修改 registry-mirrors）
+修复 ECS 系统 DNS           sudo nano /etc/systemd/resolved.conf
+                            （添加 DNS=8.8.8.8 114.114.114.114）
+强制重建镜像               docker build --no-cache -t ai-assistant:slim .
+清理 Git 大文件历史         git reset --soft HEAD~2
+                            git add -A && git commit -m "xxx"
+                            git push origin main --force
+检查容器里的包             docker exec ai-assistant pip list | findstr 包名
+
+================================================================

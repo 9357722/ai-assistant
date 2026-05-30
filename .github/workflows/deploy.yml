@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    image: ai-assistant:slim
     container_name: ai-assistant
     restart: always
     ports:

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>购物车 - AI 智能电商导购平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-dark: #0f0f23;
+            --bg-card: #1a1a3e;
+            --bg-input: #252547;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #2d2d5e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 100%);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .cart-layout {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .cart-items {
+            flex: 1;
+        }
+
+        .cart-sidebar {
+            width: 350px;
+            flex-shrink: 0;
+        }
+
+        /* Cart Item */
+        .cart-item {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .cart-item:hover {
+            border-color: var(--primary);
+        }
+
+        .item-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .item-image {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #2d2d5e, #1a1a3e);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            flex-shrink: 0;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-platform {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-price {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--danger);
+        }
+
+        .item-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 1rem;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .quantity-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: var(--primary);
+        }
+
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            padding: 0.4rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .item-total {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .delete-btn:hover {
+            color: var(--danger);
+        }
+
+        /* Cart Summary */
+        .cart-summary {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .summary-row.total {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .summary-row .amount {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 1.5rem;
+        }
+
+        .checkout-btn:hover {
+            background: #dc2626;
+        }
+
+        .checkout-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .select-all {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .select-all label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Empty Cart */
+        .empty-cart {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-text {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .shop-btn {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .shop-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Address Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 200;
+        }
+
+        .modal-content {
+            max-width: 600px;
+            margin: 5vh auto;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .address-list {
+            margin-bottom: 1rem;
+        }
+
+        .address-item {
+            padding: 1rem;
+            background: var(--bg-input);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .address-item:hover {
+            border-color: var(--primary);
+        }
+
+        .address-item.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .address-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .address-detail {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .address-phone {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .remark-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            margin-top: 1rem;
+        }
+
+        .confirm-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background 0.3s;
+        }
+
+        .confirm-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: var(--success);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 300;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .cart-layout {
+                flex-direction: column;
+            }
+
+            .cart-sidebar {
+                width: 100%;
+            }
+
+            .cart-item {
+                flex-wrap: wrap;
+            }
+
+            .item-actions {
+                flex-direction: row;
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">AI 智购</a>
+            <nav class="nav-links">
+                <a href="/">首页</a>
+                <a href="/product.html">商品</a>
+                <a href="/cart.html" class="active">购物车</a>
+                <a href="/orders.html">订单</a>
+                <a href="/user.html">我的</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="page-title">我的购物车</h1>
+
+        <div class="cart-layout">
+            <div class="cart-items">
+                <div class="select-all">
+                    <label>
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                        全选
+                    </label>
+                    <span style="margin-left: auto; color: var(--text-secondary);">
+                        共 <span id="totalCount">0</span> 件商品
+                    </span>
+                </div>
+
+                <div id="cartList">
+                    <div class="empty-cart">
+                        <div class="empty-icon">🛒</div>
+                        <p class="empty-text">购物车是空的</p>
+                        <a href="/product.html" class="shop-btn">去购物</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cart-sidebar">
+                <div class="cart-summary">
+                    <h3 class="summary-title">订单摘要</h3>
+                    <div class="summary-row">
+                        <span>商品数量</span>
+                        <span id="summaryCount">0 件</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>商品金额</span>
+                        <span id="summarySubtotal">¥0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>运费</span>
+                        <span>免运费</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>合计</span>
+                        <span class="amount" id="summaryTotal">¥0.00</span>
+                    </div>
+                    <button class="checkout-btn" id="checkoutBtn" onclick="checkout()" disabled>
+                        去结算
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Modal -->
+    <div class="modal-overlay" id="addressModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>选择收货地址</h3>
+                <button class="modal-close" onclick="closeAddressModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="address-list" id="addressList"></div>
+                <textarea class="remark-input" id="orderRemark" placeholder="订单备注（选填）"></textarea>
+                <button class="confirm-btn" onclick="confirmOrder()">确认下单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '';
+        let cartItems = [];
+        let selectedItems = new Set();
+        let addresses = [];
+        let selectedAddressId = null;
+
+        // Check login
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('请先登录', 'error');
+                setTimeout(() => window.location.href = '/user.html', 1000);
+                return false;
+            }
+            return true;
+        }
+
+        // Load cart
+        async function loadCart() {
+            if (!checkAuth()) return;
+
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/cart`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    cartItems = data.items || [];
+                    renderCart();
+                } else {
+                    showToast('加载购物车失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Render cart
+        function renderCart() {
+            const container = document.getElementById('cartList');
+
+            if (cartItems.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-icon">🛒</div>
+                        <p class="empty-text">购物车是空的</p>
+                        <a href="/product.html" class="shop-btn">去购物</a>
+                    </div>
+                `;
+                document.getElementById('totalCount').textContent = '0';
+                updateSummary();
+                return;
+            }
+
+            container.innerHTML = cartItems.map(item => `
+                <div class="cart-item" data-id="${item.id}">
+                    <input type="checkbox" class="item-checkbox"
+                        ${selectedItems.has(item.id) ? 'checked' : ''}
+                        onchange="toggleItem(${item.id})">
+                    <div class="item-image">${getProductEmoji(item.category_name)}</div>
+                    <div class="item-info">
+                        <div class="item-name">${item.product_name}</div>
+                        <div class="item-platform">${item.platform || ''}</div>
+                        <div class="item-price">¥${item.price}</div>
+                    </div>
+                    <div class="item-actions">
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                            <input type="number" class="quantity-input" value="${item.quantity}"
+                                onchange="updateQuantity(${item.id}, this.value)">
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                        </div>
+                        <div class="item-total">¥${(item.price * item.quantity).toFixed(2)}</div>
+                        <button class="delete-btn" onclick="removeItem(${item.id})">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('totalCount').textContent = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            updateSummary();
+        }
+
+        // Get product emoji
+        function getProductEmoji(category) {
+            const emojiMap = {
+                '手机': '📱',
+                '耳机': '🎧',
+                '电脑': '💻',
+                '平板': '📱',
+            };
+            return emojiMap[category] || '📦';
+        }
+
+        // Toggle item selection
+        function toggleItem(itemId) {
+            if (selectedItems.has(itemId)) {
+                selectedItems.delete(itemId);
+            } else {
+                selectedItems.add(itemId);
+            }
+            updateSelectAll();
+            updateSummary();
+        }
+
+        // Toggle select all
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll').checked;
+            if (selectAll) {
+                cartItems.forEach(item => selectedItems.add(item.id));
+            } else {
+                selectedItems.clear();
+            }
+            renderCart();
+        }
+
+        // Update select all checkbox
+        function updateSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            selectAll.checked = cartItems.length > 0 && selectedItems.size === cartItems.length;
+        }
+
+        // Update summary
+        function updateSummary() {
+            const selected = cartItems.filter(item => selectedItems.has(item.id));
+            const count = selected.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotal = selected.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            document.getElementById('summaryCount').textContent = `${count} 件`;
+            document.getElementById('summarySubtotal').textContent = `¥${subtotal.toFixed(2)}`;
+            document.getElementById('summaryTotal').textContent = `¥${subtotal.toFixed(2)}`;
+            document.getElementById('checkoutBtn').disabled = selected.length === 0;
+        }
+
+        // Update quantity
+        async function updateQuantity(itemId, newQuantity) {
+            newQuantity = parseInt(newQuantity);
+            if (newQuantity < 1) {
+                removeItem(itemId);
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/cart/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ quantity: newQuantity })
+                });
+
+                if (res.ok) {
+                    const item = cartItems.find(i => i.id === itemId);
+                    if (item) item.quantity = newQuantity;
+                    renderCart();
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '更新失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Remove item
+        async function removeItem(itemId) {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/cart/${itemId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    cartItems = cartItems.filter(i => i.id !== itemId);
+                    selectedItems.delete(itemId);
+                    renderCart();
+                    showToast('已移除');
+                } else {
+                    showToast('删除失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Checkout
+        async function checkout() {
+            if (selectedItems.size === 0) {
+                showToast('请选择商品', 'error');
+                return;
+            }
+
+            // Load addresses
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/user/addresses`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    addresses = data.items || [];
+                    renderAddresses();
+                    document.getElementById('addressModal').style.display = 'block';
+                } else {
+                    showToast('获取地址失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Render addresses
+        function renderAddresses() {
+            const container = document.getElementById('addressList');
+            if (addresses.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">暂无收货地址，请先添加</p>';
+                return;
+            }
+
+            container.innerHTML = addresses.map(addr => `
+                <div class="address-item ${selectedAddressId === addr.id ? 'selected' : ''}"
+                    onclick="selectAddress(${addr.id})">
+                    <div class="address-name">${addr.name} ${addr.is_default ? '<span style="color: var(--primary); font-size: 0.8rem;">默认</span>' : ''}</div>
+                    <div class="address-detail">${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.detail || ''}</div>
+                    <div class="address-phone">${addr.phone}</div>
+                </div>
+            `).join('');
+
+            // Auto select default
+            if (!selectedAddressId) {
+                const defaultAddr = addresses.find(a => a.is_default);
+                if (defaultAddr) selectedAddressId = defaultAddr.id;
+                else if (addresses.length > 0) selectedAddressId = addresses[0].id;
+                renderAddresses();
+            }
+        }
+
+        // Select address
+        function selectAddress(id) {
+            selectedAddressId = id;
+            renderAddresses();
+        }
+
+        // Close address modal
+        function closeAddressModal() {
+            document.getElementById('addressModal').style.display = 'none';
+        }
+
+        // Confirm order
+        async function confirmOrder() {
+            if (!selectedAddressId) {
+                showToast('请选择收货地址', 'error');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            const remark = document.getElementById('orderRemark').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        address_id: selectedAddressId,
+                        remark: remark,
+                        cart_item_ids: Array.from(selectedItems)
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast('下单成功');
+                    closeAddressModal();
+
+                    // Remove ordered items from cart
+                    cartItems = cartItems.filter(i => !selectedItems.has(i.id));
+                    selectedItems.clear();
+                    renderCart();
+
+                    // Redirect to orders
+                    setTimeout(() => window.location.href = '/orders.html', 1500);
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '下单失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Show toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('addressModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('addressModal')) closeAddressModal();
+        });
+
+        // Initialize
+        loadCart();
+    </script>
+</body>
+</html>

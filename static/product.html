@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品列表 - AI 智能电商导购平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-dark: #0f0f23;
+            --bg-card: #1a1a3e;
+            --bg-input: #252547;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #2d2d5e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 100%);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .search-box {
+            flex: 1;
+            display: flex;
+            background: var(--bg-input);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .search-box button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .search-box button:hover {
+            background: var(--primary-dark);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .user-menu {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* Sidebar Filters */
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+        }
+
+        .filter-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: color 0.3s;
+        }
+
+        .filter-group label:hover {
+            color: var(--text-primary);
+        }
+
+        .filter-group input[type="radio"],
+        .filter-group input[type="checkbox"] {
+            accent-color: var(--primary);
+        }
+
+        .price-inputs {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .price-inputs input {
+            width: 80px;
+            padding: 0.5rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .price-inputs span {
+            color: var(--text-secondary);
+        }
+
+        .filter-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+            margin-top: 1rem;
+        }
+
+        .filter-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Product Grid */
+        .product-section {
+            flex: 1;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .sort-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sort-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .sort-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #2d2d5e, #1a1a3e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--danger);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .product-rating {
+            color: var(--warning);
+        }
+
+        /* Product Detail Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 200;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            display: flex;
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .detail-image {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #2d2d5e, #1a1a3e);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            flex-shrink: 0;
+        }
+
+        .detail-info {
+            flex: 1;
+        }
+
+        .detail-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .detail-price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--danger);
+            margin-bottom: 1rem;
+        }
+
+        .detail-meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-input);
+            border-radius: 8px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .meta-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .meta-value {
+            font-weight: 500;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quantity-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-input {
+            width: 60px;
+            text-align: center;
+            padding: 0.5rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-cart {
+            flex: 1;
+            padding: 1rem;
+            background: var(--warning);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-cart:hover {
+            background: #d97706;
+        }
+
+        .btn-buy {
+            flex: 1;
+            padding: 1rem;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-buy:hover {
+            background: #dc2626;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .reviews-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .review-card {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .review-user {
+            font-weight: 500;
+        }
+
+        .review-date {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .review-rating {
+            color: var(--warning);
+            margin-bottom: 0.5rem;
+        }
+
+        .review-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Similar Products */
+        .similar-section {
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .similar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .page-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-btn:hover:not(.active) {
+            border-color: var(--primary);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: var(--success);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 300;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .modal-body {
+                flex-direction: column;
+            }
+
+            .detail-image {
+                width: 100%;
+                height: 300px;
+            }
+
+            .similar-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">AI 智购</a>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索商品...">
+                <button onclick="searchProducts()">搜索</button>
+            </div>
+            <nav class="nav-links">
+                <a href="/">首页</a>
+                <a href="/cart.html">购物车</a>
+                <a href="/orders.html">订单</a>
+                <div class="user-menu" id="userMenu">
+                    <div class="user-avatar" id="userAvatar">?</div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Sidebar Filters -->
+        <aside class="sidebar">
+            <div class="filter-card">
+                <h3 class="filter-title">商品分类</h3>
+                <div class="filter-group" id="categoryFilters">
+                    <label>
+                        <input type="radio" name="category" value="" checked>
+                        全部分类
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-card">
+                <h3 class="filter-title">价格区间</h3>
+                <div class="filter-group">
+                    <label>
+                        <input type="radio" name="price" value="" checked>
+                        不限
+                    </label>
+                    <label>
+                        <input type="radio" name="price" value="0-1000">
+                        0 - 1000元
+                    </label>
+                    <label>
+                        <input type="radio" name="price" value="1000-3000">
+                        1000 - 3000元
+                    </label>
+                    <label>
+                        <input type="radio" name="price" value="3000-5000">
+                        3000 - 5000元
+                    </label>
+                    <label>
+                        <input type="radio" name="price" value="5000-10000">
+                        5000 - 10000元
+                    </label>
+                    <label>
+                        <input type="radio" name="price" value="10000-">
+                        10000元以上
+                    </label>
+                    <div class="price-inputs">
+                        <input type="number" id="priceMin" placeholder="最低">
+                        <span>-</span>
+                        <input type="number" id="priceMax" placeholder="最高">
+                    </div>
+                </div>
+                <button class="filter-btn" onclick="applyFilters()">筛选</button>
+            </div>
+
+            <div class="filter-card">
+                <h3 class="filter-title">平台</h3>
+                <div class="filter-group" id="platformFilters">
+                    <label>
+                        <input type="radio" name="platform" value="" checked>
+                        全部平台
+                    </label>
+                    <label>
+                        <input type="radio" name="platform" value="京东">
+                        京东
+                    </label>
+                    <label>
+                        <input type="radio" name="platform" value="淘宝">
+                        淘宝
+                    </label>
+                    <label>
+                        <input type="radio" name="platform" value="拼多多">
+                        拼多多
+                    </label>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Product Section -->
+        <section class="product-section">
+            <div class="section-header">
+                <h2 class="section-title" id="sectionTitle">全部商品</h2>
+                <div class="sort-options">
+                    <button class="sort-btn active" data-sort="default">综合排序</button>
+                    <button class="sort-btn" data-sort="price_asc">价格↑</button>
+                    <button class="sort-btn" data-sort="price_desc">价格↓</button>
+                    <button class="sort-btn" data-sort="sales">销量↓</button>
+                    <button class="sort-btn" data-sort="rating">评分↓</button>
+                </div>
+            </div>
+
+            <div id="productList" class="product-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 1rem;">加载中...</p>
+                </div>
+            </div>
+
+            <div class="pagination" id="pagination"></div>
+        </section>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>商品详情</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-image" id="detailImage">📦</div>
+                <div class="detail-info">
+                    <h2 class="detail-title" id="detailTitle"></h2>
+                    <div class="detail-price" id="detailPrice"></div>
+                    <div class="detail-meta" id="detailMeta"></div>
+                    <div class="quantity-control">
+                        <span>数量：</span>
+                        <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
+                        <input type="number" class="quantity-input" id="quantity" value="1" min="1">
+                        <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
+                        <span id="stockInfo" style="color: var(--text-secondary); margin-left: 1rem;"></span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-cart" onclick="addToCart()">加入购物车</button>
+                        <button class="btn-buy" onclick="buyNow()">立即购买</button>
+                    </div>
+                </div>
+            </div>
+            <div class="reviews-section">
+                <div class="reviews-header">
+                    <h3>商品评价</h3>
+                    <button class="sort-btn" onclick="showReviewForm()">写评价</button>
+                </div>
+                <div id="reviewsList"></div>
+            </div>
+            <div class="similar-section">
+                <h3 style="margin-bottom: 1rem;">相似商品推荐</h3>
+                <div class="similar-grid" id="similarProducts"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Form Modal -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>写评价</h3>
+                <button class="modal-close" onclick="closeReviewModal()">&times;</button>
+            </div>
+            <div style="padding: 2rem;">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem;">评分</label>
+                    <div id="ratingStars" style="font-size: 2rem; cursor: pointer;">
+                        <span data-rating="1">☆</span>
+                        <span data-rating="2">☆</span>
+                        <span data-rating="3">☆</span>
+                        <span data-rating="4">☆</span>
+                        <span data-rating="5">☆</span>
+                    </div>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem;">评价内容</label>
+                    <textarea id="reviewContent" rows="4" style="width: 100%; padding: 0.75rem; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); resize: vertical;"></textarea>
+                </div>
+                <button class="filter-btn" onclick="submitReview()">提交评价</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '';
+        let currentProduct = null;
+        let currentRating = 0;
+        let currentPage = 1;
+        let currentSort = 'default';
+        let currentCategory = '';
+        let currentPlatform = '';
+        let currentPriceMin = '';
+        let currentPriceMax = '';
+        let currentKeyword = '';
+
+        // Check login status
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            if (token && username) {
+                document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+                document.getElementById('userMenu').onclick = () => window.location.href = '/user.html';
+            } else {
+                document.getElementById('userMenu').onclick = () => window.location.href = '/user.html';
+            }
+        }
+
+        // Load categories
+        async function loadCategories() {
+            try {
+                const res = await fetch(`${API_BASE}/api/products/categories/list`);
+                const data = await res.json();
+                const container = document.getElementById('categoryFilters');
+                container.innerHTML = '<label><input type="radio" name="category" value="" checked> 全部分类</label>';
+                data.forEach(cat => {
+                    container.innerHTML += `
+                        <label>
+                            <input type="radio" name="category" value="${cat.id}">
+                            ${cat.name}
+                        </label>
+                    `;
+                });
+                // Add event listeners
+                document.querySelectorAll('input[name="category"]').forEach(input => {
+                    input.addEventListener('change', () => {
+                        currentCategory = input.value;
+                        currentPage = 1;
+                        loadProducts();
+                    });
+                });
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+            }
+        }
+
+        // Load products
+        async function loadProducts() {
+            const container = document.getElementById('productList');
+            container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p style="margin-top: 1rem;">加载中...</p></div>';
+
+            try {
+                let url = `${API_BASE}/api/products?page=${currentPage}&page_size=20`;
+                if (currentCategory) url += `&category_id=${currentCategory}`;
+                if (currentPlatform) url += `&platform=${currentPlatform}`;
+                if (currentPriceMin) url += `&price_min=${currentPriceMin}`;
+                if (currentPriceMax) url += `&price_max=${currentPriceMax}`;
+                if (currentKeyword) url += `&keyword=${encodeURIComponent(currentKeyword)}`;
+
+                // Sort
+                switch(currentSort) {
+                    case 'price_asc': url += '&sort=price_asc'; break;
+                    case 'price_desc': url += '&sort=price_desc'; break;
+                    case 'sales': url += '&sort=sales_desc'; break;
+                    case 'rating': url += '&sort=rating_desc'; break;
+                }
+
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.items && data.items.length > 0) {
+                    container.innerHTML = data.items.map(p => `
+                        <div class="product-card" onclick="showProductDetail(${p.id})">
+                            <div class="product-image">${getProductEmoji(p.category_name)}</div>
+                            <div class="product-info">
+                                <div class="product-name">${p.name}</div>
+                                <div class="product-price">¥${p.price}</div>
+                                <div class="product-meta">
+                                    <span class="product-rating">★ ${p.rating || '5.0'}</span>
+                                    <span>${p.sales || 0}人付款</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // Pagination
+                    renderPagination(data.total, data.page, data.page_size);
+                } else {
+                    container.innerHTML = '<div class="loading"><p>暂无商品</p></div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="loading"><p>加载失败，请重试</p></div>';
+                console.error('Failed to load products:', err);
+            }
+        }
+
+        // Get product emoji based on category
+        function getProductEmoji(category) {
+            const emojiMap = {
+                '手机': '📱',
+                '耳机': '🎧',
+                '电脑': '💻',
+                '平板': '📱',
+            };
+            return emojiMap[category] || '📦';
+        }
+
+        // Render pagination
+        function renderPagination(total, page, pageSize) {
+            const totalPages = Math.ceil(total / pageSize);
+            const container = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            if (page > 1) {
+                html += `<button class="page-btn" onclick="goToPage(${page - 1})">上一页</button>`;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += '<span style="color: var(--text-secondary);">...</span>';
+                }
+            }
+
+            if (page < totalPages) {
+                html += `<button class="page-btn" onclick="goToPage(${page + 1})">下一页</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Go to page
+        function goToPage(page) {
+            currentPage = page;
+            loadProducts();
+            window.scrollTo(0, 0);
+        }
+
+        // Search products
+        function searchProducts() {
+            currentKeyword = document.getElementById('searchInput').value.trim();
+            currentPage = 1;
+            loadProducts();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const priceRadio = document.querySelector('input[name="price"]:checked');
+            if (priceRadio && priceRadio.value) {
+                const [min, max] = priceRadio.value.split('-');
+                currentPriceMin = min || '';
+                currentPriceMax = max || '';
+            } else {
+                currentPriceMin = document.getElementById('priceMin').value;
+                currentPriceMax = document.getElementById('priceMax').value;
+            }
+
+            const platformRadio = document.querySelector('input[name="platform"]:checked');
+            currentPlatform = platformRadio ? platformRadio.value : '';
+
+            currentPage = 1;
+            loadProducts();
+        }
+
+        // Sort buttons
+        document.querySelectorAll('.sort-btn[data-sort]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sort-btn[data-sort]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentSort = btn.dataset.sort;
+                currentPage = 1;
+                loadProducts();
+            });
+        });
+
+        // Show product detail
+        async function showProductDetail(productId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/products/${productId}`);
+                currentProduct = await res.json();
+
+                document.getElementById('detailImage').textContent = getProductEmoji(currentProduct.category_name);
+                document.getElementById('detailTitle').textContent = currentProduct.name;
+                document.getElementById('detailPrice').textContent = `¥${currentProduct.price}`;
+                document.getElementById('detailMeta').innerHTML = `
+                    <div class="meta-item">
+                        <span class="meta-label">平台</span>
+                        <span class="meta-value">${currentProduct.platform}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">分类</span>
+                        <span class="meta-value">${currentProduct.category_name || '未分类'}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">库存</span>
+                        <span class="meta-value">${currentProduct.stock}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">销量</span>
+                        <span class="meta-value">${currentProduct.sales || 0}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">评分</span>
+                        <span class="meta-value">${currentProduct.rating || '5.0'}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">评价数</span>
+                        <span class="meta-value">${currentProduct.review_count || 0}</span>
+                    </div>
+                `;
+                document.getElementById('stockInfo').textContent = `库存 ${currentProduct.stock} 件`;
+                document.getElementById('quantity').value = 1;
+
+                // Load reviews
+                loadReviews(productId);
+
+                // Load similar products
+                loadSimilarProducts(productId);
+
+                document.getElementById('productModal').style.display = 'block';
+            } catch (err) {
+                showToast('加载商品详情失败', 'error');
+                console.error('Failed to load product detail:', err);
+            }
+        }
+
+        // Load reviews
+        async function loadReviews(productId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/products/${productId}/reviews`);
+                const data = await res.json();
+                const container = document.getElementById('reviewsList');
+
+                if (data.items && data.items.length > 0) {
+                    container.innerHTML = data.items.map(review => `
+                        <div class="review-card">
+                            <div class="review-header">
+                                <span class="review-user">${review.username || '匿名用户'}</span>
+                                <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <div class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                            <div class="review-content">${review.content}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="color: var(--text-secondary);">暂无评价</p>';
+                }
+            } catch (err) {
+                console.error('Failed to load reviews:', err);
+            }
+        }
+
+        // Load similar products
+        async function loadSimilarProducts(productId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/ai/recommendations/similar/${productId}`);
+                const data = await res.json();
+                const container = document.getElementById('similarProducts');
+
+                if (data.items && data.items.length > 0) {
+                    container.innerHTML = data.items.slice(0, 4).map(p => `
+                        <div class="product-card" onclick="showProductDetail(${p.id})">
+                            <div class="product-image">${getProductEmoji(p.category_name)}</div>
+                            <div class="product-info">
+                                <div class="product-name">${p.name}</div>
+                                <div class="product-price">¥${p.price}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="color: var(--text-secondary);">暂无相似商品</p>';
+                }
+            } catch (err) {
+                console.error('Failed to load similar products:', err);
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('productModal').style.display = 'none';
+            currentProduct = null;
+        }
+
+        // Change quantity
+        function changeQuantity(delta) {
+            const input = document.getElementById('quantity');
+            let value = parseInt(input.value) + delta;
+            if (value < 1) value = 1;
+            if (currentProduct && value > currentProduct.stock) {
+                value = currentProduct.stock;
+            }
+            input.value = value;
+        }
+
+        // Add to cart
+        async function addToCart() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('请先登录', 'error');
+                setTimeout(() => window.location.href = '/user.html', 1000);
+                return;
+            }
+
+            if (!currentProduct) return;
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/cart/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        product_id: currentProduct.id,
+                        quantity: quantity
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showToast('已添加到购物车');
+                } else {
+                    showToast(data.detail || '添加失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Buy now
+        async function buyNow() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('请先登录', 'error');
+                setTimeout(() => window.location.href = '/user.html', 1000);
+                return;
+            }
+
+            await addToCart();
+            window.location.href = '/cart.html';
+        }
+
+        // Show review form
+        function showReviewForm() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('请先登录', 'error');
+                return;
+            }
+            currentRating = 0;
+            document.getElementById('reviewContent').value = '';
+            updateStars();
+            document.getElementById('reviewModal').style.display = 'block';
+        }
+
+        // Close review modal
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+        }
+
+        // Rating stars
+        document.getElementById('ratingStars').addEventListener('click', (e) => {
+            if (e.target.dataset.rating) {
+                currentRating = parseInt(e.target.dataset.rating);
+                updateStars();
+            }
+        });
+
+        function updateStars() {
+            const stars = document.querySelectorAll('#ratingStars span');
+            stars.forEach((star, index) => {
+                star.textContent = index < currentRating ? '★' : '☆';
+            });
+        }
+
+        // Submit review
+        async function submitReview() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('请先登录', 'error');
+                return;
+            }
+
+            if (currentRating === 0) {
+                showToast('请选择评分', 'error');
+                return;
+            }
+
+            const content = document.getElementById('reviewContent').value.trim();
+            if (!content) {
+                showToast('请输入评价内容', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/products/${currentProduct.id}/reviews`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        rating: currentRating,
+                        content: content
+                    })
+                });
+
+                if (res.ok) {
+                    showToast('评价成功');
+                    closeReviewModal();
+                    loadReviews(currentProduct.id);
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '评价失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Show toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.background = type === 'error' ? 'var(--danger)' : 'var(--success)';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Search on Enter
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchProducts();
+        });
+
+        // Platform filter
+        document.querySelectorAll('input[name="platform"]').forEach(input => {
+            input.addEventListener('change', () => {
+                currentPlatform = input.value;
+                currentPage = 1;
+                loadProducts();
+            });
+        });
+
+        // Close modal on outside click
+        document.getElementById('productModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('productModal')) closeModal();
+        });
+
+        document.getElementById('reviewModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('reviewModal')) closeReviewModal();
+        });
+
+        // Initialize
+        checkAuth();
+        loadCategories();
+        loadProducts();
+    </script>
+</body>
+</html>

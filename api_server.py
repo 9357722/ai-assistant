@@ -5,6 +5,14 @@ import time
 from fastapi import Header, HTTPException, Request
 from collections import defaultdict
 
+# 导入用户路由模块
+from routes.user import router as user_router
+from routes.product import router as product_router
+from routes.cart import router as cart_router
+from routes.order import router as order_router
+from routes.ai import router as ai_router
+from routes.admin import router as admin_router
+
 # 强制使用 UTF-8
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
@@ -86,8 +94,20 @@ class UTF8JSONResponse(JSONResponse):
     def render(self, content: any) -> bytes:
         return json.dumps(content, ensure_ascii=False).encode('utf-8')
 
-app = FastAPI(title="商品比价 AI 助手", default_response_class=UTF8JSONResponse)
+app = FastAPI(title="AI 智能电商导购平台", default_response_class=UTF8JSONResponse)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+# 注册用户模块路由
+app.include_router(user_router)
+app.include_router(product_router)
+app.include_router(cart_router)
+app.include_router(order_router)
+app.include_router(ai_router)
+app.include_router(admin_router)
+
+# 静态文件服务
+from fastapi.staticfiles import StaticFiles
+app.mount("/static", StaticFiles(directory="static"), name="static")
 # ================== API 鉴权配置 ==================
 # 有效的 API Key 列表（实际项目中存数据库或环境变量）
 VALID_API_KEYS = {"sk-agent-key-001", "sk-agent-key-002"}
@@ -246,6 +266,46 @@ async def delete_product(request: DeleteProductRequest):
 # ================== Agent 接口 ==================
 from agent_tools import agent as agent_executor
 
+# ================== 页面路由 ==================
+from fastapi.responses import HTMLResponse
+import os
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """首页"""
+    with open("static/index.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/product.html", response_class=HTMLResponse)
+async def product_page():
+    """商品页"""
+    with open("static/product.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/cart.html", response_class=HTMLResponse)
+async def cart_page():
+    """购物车页"""
+    with open("static/cart.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/orders.html", response_class=HTMLResponse)
+async def orders_page():
+    """订单页"""
+    with open("static/orders.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/user.html", response_class=HTMLResponse)
+async def user_page():
+    """用户中心页"""
+    with open("static/user.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+@app.get("/chat.html", response_class=HTMLResponse)
+async def chat_page():
+    """AI 对话页"""
+    with open("static/chat.html", "r", encoding="utf-8") as f:
+        return f.read()
+
 @app.post("/agent")
 async def agent_chat(request: ChatRequest, api_key: str = Depends(verify_api_key)):
     try:
@@ -266,3 +326,41 @@ async def agent_chat(request: ChatRequest, api_key: str = Depends(verify_api_key
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# ================== CrewAI 多 Agent 接口 ==================
+
+@app.post("/crew")
+async def crew_chat(request: ChatRequest, api_key: str = Depends(verify_api_key)):
+    """多角色协作：查价 + 分析（单 Agent Prompt 版）"""
+    try:
+        check_rate_limit(api_key)
+
+        # 构建多角色 System Prompt
+        system_prompt = """你现在需要扮演两个角色来完成用户的问题：
+
+【角色1：商品价格查询员】
+- 使用 search_product_price 工具查询用户想了解的商品价格
+- 把各平台的价格清晰地列出来
+
+【角色2：价格分析师】
+- 根据查到的价格数据，对比不同平台的价格差异
+- 分析哪个平台最划算
+- 给出明确的购买建议
+
+流程要求：
+1. 必须先以"查价员"身份调用工具查询
+2. 再以"分析师"身份对数据进行分析
+3. 最终输出要包含价格对比和购买建议两个部分
+"""
+        config = {"configurable": {"thread_id": "crew-session-001"}}
+        result = await agent_executor.ainvoke(
+            {"messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": request.question}
+            ]},
+            config=config
+        )
+        answer = result["messages"][-1].content
+        return {"question": request.question, "answer": answer}
+    except Exception as e:
+        return {"error": str(e)}

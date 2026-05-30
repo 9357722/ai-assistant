@@ -13,3 +13,7 @@ python-multipart
 aiomysql
 cryptography
 crewai
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+pydantic[email]

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的订单 - AI 智能电商导购平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-dark: #0f0f23;
+            --bg-card: #1a1a3e;
+            --bg-input: #252547;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #2d2d5e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 100%);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        /* Status Tabs */
+        .status-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .status-tab {
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+        }
+
+        .status-tab:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        .status-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Order Card */
+        .order-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-input);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-no {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .order-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .status-paid {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-shipped {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-cancelled {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .order-items {
+            padding: 1rem 1.5rem;
+        }
+
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-image {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #2d2d5e, #1a1a3e);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-spec {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .item-price {
+            text-align: right;
+        }
+
+        .price {
+            font-weight: 600;
+            color: var(--danger);
+        }
+
+        .quantity {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-input);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .order-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .order-total {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .order-total .amount {
+            color: var(--danger);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-primary);
+        }
+
+        .action-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .action-btn.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .action-btn.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .action-btn.danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-text {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .shop-btn {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .shop-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Order Detail Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 200;
+        }
+
+        .modal-content {
+            max-width: 700px;
+            margin: 5vh auto;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            z-index: 10;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .detail-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .detail-row .label {
+            color: var(--text-secondary);
+        }
+
+        .detail-row .value {
+            color: var(--text-primary);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .page-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .page-btn:hover:not(.active) {
+            border-color: var(--primary);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: var(--success);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 300;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .order-header {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+
+            .order-footer {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .order-actions {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .action-btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">AI 智购</a>
+            <nav class="nav-links">
+                <a href="/">首页</a>
+                <a href="/product.html">商品</a>
+                <a href="/cart.html">购物车</a>
+                <a href="/orders.html" class="active">订单</a>
+                <a href="/user.html">我的</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="page-title">我的订单</h1>
+
+        <div class="status-tabs">
+            <div class="status-tab active" data-status="">全部</div>
+            <div class="status-tab" data-status="pending">待支付</div>
+            <div class="status-tab" data-status="paid">已支付</div>
+            <div class="status-tab" data-status="shipped">已发货</div>
+            <div class="status-tab" data-status="completed">已完成</div>
+            <div class="status-tab" data-status="cancelled">已取消</div>
+        </div>
+
+        <div id="orderList">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 1rem;">加载中...</p>
+            </div>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div class="modal-overlay" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>订单详情</h3>
+                <button class="modal-close" onclick="closeOrderModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="orderDetail"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '';
+        let currentStatus = '';
+        let currentPage = 1;
+
+        // Check login
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showToast('请先登录', 'error');
+                setTimeout(() => window.location.href = '/user.html', 1000);
+                return false;
+            }
+            return true;
+        }
+
+        // Status map
+        const statusMap = {
+            'pending': '待支付',
+            'paid': '已支付',
+            'shipped': '已发货',
+            'completed': '已完成',
+            'cancelled': '已取消'
+        };
+
+        // Load orders
+        async function loadOrders() {
+            if (!checkAuth()) return;
+
+            const token = localStorage.getItem('token');
+            const container = document.getElementById('orderList');
+            container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p style="margin-top: 1rem;">加载中...</p></div>';
+
+            try {
+                let url = `${API_BASE}/api/orders?page=${currentPage}&page_size=10`;
+                if (currentStatus) url += `&status=${currentStatus}`;
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.items && data.items.length > 0) {
+                        container.innerHTML = data.items.map(order => renderOrderCard(order)).join('');
+                        renderPagination(data.total, data.page, data.page_size);
+                    } else {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <div class="empty-icon">📦</div>
+                                <p class="empty-text">暂无订单</p>
+                                <a href="/product.html" class="shop-btn">去购物</a>
+                            </div>
+                        `;
+                        document.getElementById('pagination').innerHTML = '';
+                    }
+                } else {
+                    container.innerHTML = '<div class="empty-state"><p class="empty-text">加载失败</p></div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state"><p class="empty-text">网络错误</p></div>';
+            }
+        }
+
+        // Render order card
+        function renderOrderCard(order) {
+            const itemsHtml = order.items.map(item => `
+                <div class="order-item">
+                    <div class="item-image">📦</div>
+                    <div class="item-info">
+                        <div class="item-name">${item.product_name}</div>
+                        <div class="item-spec">x${item.quantity}</div>
+                    </div>
+                    <div class="item-price">
+                        <div class="price">¥${item.price}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const actionsHtml = renderOrderActions(order);
+
+            return `
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-no">订单号: ${order.order_no}</span>
+                        <span class="order-status status-${order.status}">${statusMap[order.status] || order.status}</span>
+                    </div>
+                    <div class="order-items">${itemsHtml}</div>
+                    <div class="order-footer">
+                        <span class="order-time">${new Date(order.created_at).toLocaleString()}</span>
+                        <div style="display: flex; align-items: center;">
+                            <span class="order-total">合计: <span class="amount">¥${order.total_amount}</span></span>
+                            <div class="order-actions">${actionsHtml}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render order actions
+        function renderOrderActions(order) {
+            let html = `<button class="action-btn" onclick="viewOrderDetail(${order.id})">详情</button>`;
+
+            switch (order.status) {
+                case 'pending':
+                    html += `<button class="action-btn primary" onclick="payOrder(${order.id})">支付</button>`;
+                    html += `<button class="action-btn danger" onclick="cancelOrder(${order.id})">取消</button>`;
+                    break;
+                case 'shipped':
+                    html += `<button class="action-btn primary" onclick="confirmOrder(${order.id})">确认收货</button>`;
+                    break;
+            }
+
+            return html;
+        }
+
+        // View order detail
+        async function viewOrderDetail(orderId) {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/orders/${orderId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const order = await res.json();
+                    renderOrderDetail(order);
+                    document.getElementById('orderModal').style.display = 'block';
+                } else {
+                    showToast('获取订单详情失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Render order detail
+        function renderOrderDetail(order) {
+            const address = order.address_snapshot || {};
+            const itemsHtml = order.items.map(item => `
+                <div class="order-item">
+                    <div class="item-image">📦</div>
+                    <div class="item-info">
+                        <div class="item-name">${item.product_name}</div>
+                        <div class="item-spec">单价: ¥${item.price} x${item.quantity}</div>
+                    </div>
+                    <div class="item-price">
+                        <div class="price">¥${(item.price * item.quantity).toFixed(2)}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('orderDetail').innerHTML = `
+                <div class="detail-section">
+                    <h4 class="detail-title">订单信息</h4>
+                    <div class="detail-row">
+                        <span class="label">订单号</span>
+                        <span class="value">${order.order_no}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">订单状态</span>
+                        <span class="value">${statusMap[order.status] || order.status}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">下单时间</span>
+                        <span class="value">${new Date(order.created_at).toLocaleString()}</span>
+                    </div>
+                    ${order.paid_at ? `
+                    <div class="detail-row">
+                        <span class="label">支付时间</span>
+                        <span class="value">${new Date(order.paid_at).toLocaleString()}</span>
+                    </div>
+                    ` : ''}
+                    ${order.remark ? `
+                    <div class="detail-row">
+                        <span class="label">备注</span>
+                        <span class="value">${order.remark}</span>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <div class="detail-section">
+                    <h4 class="detail-title">收货信息</h4>
+                    <div class="detail-row">
+                        <span class="label">收货人</span>
+                        <span class="value">${address.name || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">联系电话</span>
+                        <span class="value">${address.phone || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">收货地址</span>
+                        <span class="value">${address.province || ''}${address.city || ''}${address.district || ''}${address.detail || '-'}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4 class="detail-title">商品信息</h4>
+                    ${itemsHtml}
+                </div>
+
+                <div class="detail-section">
+                    <h4 class="detail-title">费用信息</h4>
+                    <div class="detail-row">
+                        <span class="label">商品金额</span>
+                        <span class="value">¥${order.total_amount}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">运费</span>
+                        <span class="value">免运费</span>
+                    </div>
+                    <div class="detail-row" style="font-weight: 600; font-size: 1.1rem;">
+                        <span class="label">实付金额</span>
+                        <span class="value" style="color: var(--danger);">¥${order.pay_amount || order.total_amount}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Close order modal
+        function closeOrderModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+        // Pay order
+        async function payOrder(orderId) {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/orders/${orderId}/pay`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    showToast('支付成功');
+                    loadOrders();
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '支付失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Cancel order
+        async function cancelOrder(orderId) {
+            if (!confirm('确定要取消订单吗？')) return;
+
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/orders/${orderId}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    showToast('订单已取消');
+                    loadOrders();
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '取消失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Confirm order
+        async function confirmOrder(orderId) {
+            if (!confirm('确认已收到商品？')) return;
+
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/orders/${orderId}/complete`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    showToast('已确认收货');
+                    loadOrders();
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '确认失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
+        }
+
+        // Render pagination
+        function renderPagination(total, page, pageSize) {
+            const totalPages = Math.ceil(total / pageSize);
+            const container = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            if (page > 1) {
+                html += `<button class="page-btn" onclick="goToPage(${page - 1})">上一页</button>`;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+                    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+                } else if (i === page - 3 || i === page + 3) {
+                    html += '<span style="color: var(--text-secondary);">...</span>';
+                }
+            }
+
+            if (page < totalPages) {
+                html += `<button class="page-btn" onclick="goToPage(${page + 1})">下一页</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Go to page
+        function goToPage(page) {
+            currentPage = page;
+            loadOrders();
+            window.scrollTo(0, 0);
+        }
+
+        // Status tabs
+        document.querySelectorAll('.status-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.status-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentStatus = tab.dataset.status;
+                currentPage = 1;
+                loadOrders();
+            });
+        });
+
+        // Show toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Close modal on outside click
+        document.getElementById('orderModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('orderModal')) closeOrderModal();
+        });
+
+        // Initialize
+        loadOrders();
+    </script>
+</body>
+</html>

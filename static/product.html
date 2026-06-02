@@ -12,17 +12,17 @@
         }
 
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --bg-dark: #0f0f23;
-            --bg-card: #1a1a3e;
-            --bg-input: #252547;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border-color: #2d2d5e;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
+            --primary: #0071e3;
+            --primary-dark: #0077ed;
+            --bg-dark: #f5f5f7;
+            --bg-card: #ffffff;
+            --bg-input: #f0f0f2;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --border-color: rgba(0,0,0,0.08);
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
         }
 
         body {
@@ -32,14 +32,47 @@
             min-height: 100vh;
         }
 
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse at 40% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2%, -2%) rotate(1deg); }
+            50% { transform: translate(-1%, 1%) rotate(-1deg); }
+            75% { transform: translate(1%, 2%) rotate(0.5deg); }
+        }
+
         /* Header */
         .header {
-            background: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 100%);
+            background: rgba(255, 255, 255, 0.9);
             padding: 1rem 2rem;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .header-content {
@@ -281,11 +314,22 @@
         .product-image {
             width: 100%;
             height: 200px;
-            background: linear-gradient(135deg, #2d2d5e, #1a1a3e);
+            background: var(--bg-input);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
         }
 
         .product-info {
@@ -367,13 +411,19 @@
         .detail-image {
             width: 400px;
             height: 400px;
-            background: linear-gradient(135deg, #2d2d5e, #1a1a3e);
+            background: var(--bg-input);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 5rem;
             flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .detail-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .detail-info {
@@ -641,6 +691,7 @@
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
     <!-- Header -->
     <header class="header">
         <div class="header-content">
@@ -888,16 +939,16 @@
                 let url = `${API_BASE}/api/products?page=${currentPage}&page_size=20`;
                 if (currentCategory) url += `&category_id=${currentCategory}`;
                 if (currentPlatform) url += `&platform=${currentPlatform}`;
-                if (currentPriceMin) url += `&price_min=${currentPriceMin}`;
-                if (currentPriceMax) url += `&price_max=${currentPriceMax}`;
+                if (currentPriceMin) url += `&min_price=${currentPriceMin}`;
+                if (currentPriceMax) url += `&max_price=${currentPriceMax}`;
                 if (currentKeyword) url += `&keyword=${encodeURIComponent(currentKeyword)}`;
 
                 // Sort
                 switch(currentSort) {
-                    case 'price_asc': url += '&sort=price_asc'; break;
-                    case 'price_desc': url += '&sort=price_desc'; break;
-                    case 'sales': url += '&sort=sales_desc'; break;
-                    case 'rating': url += '&sort=rating_desc'; break;
+                    case 'price_asc': url += '&sort_by=price&sort_order=asc'; break;
+                    case 'price_desc': url += '&sort_by=price&sort_order=desc'; break;
+                    case 'sales': url += '&sort_by=sales&sort_order=desc'; break;
+                    case 'rating': url += '&sort_by=rating&sort_order=desc'; break;
                 }
 
                 const res = await fetch(url);
@@ -906,7 +957,7 @@
                 if (data.items && data.items.length > 0) {
                     container.innerHTML = data.items.map(p => `
                         <div class="product-card" onclick="showProductDetail(${p.id})">
-                            <div class="product-image">${getProductEmoji(p.category_name)}</div>
+                            <div class="product-image">${p.main_image ? `<img src="${p.main_image}" alt="${p.name}">` : '📦'}</div>
                             <div class="product-info">
                                 <div class="product-name">${p.name}</div>
                                 <div class="product-price">¥${p.price}</div>
@@ -1020,7 +1071,7 @@
                 const res = await fetch(`${API_BASE}/api/products/${productId}`);
                 currentProduct = await res.json();
 
-                document.getElementById('detailImage').textContent = getProductEmoji(currentProduct.category_name);
+                document.getElementById('detailImage').innerHTML = currentProduct.main_image ? `<img src="${currentProduct.main_image}" alt="${currentProduct.name}">` : '📦';
                 document.getElementById('detailTitle').textContent = currentProduct.name;
                 document.getElementById('detailPrice').textContent = `¥${currentProduct.price}`;
                 document.getElementById('detailMeta').innerHTML = `
@@ -1101,7 +1152,7 @@
                 if (data.items && data.items.length > 0) {
                     container.innerHTML = data.items.slice(0, 4).map(p => `
                         <div class="product-card" onclick="showProductDetail(${p.id})">
-                            <div class="product-image">${getProductEmoji(p.category_name)}</div>
+                            <div class="product-image">${p.main_image ? `<img src="${p.main_image}" alt="${p.name}">` : '📦'}</div>
                             <div class="product-info">
                                 <div class="product-name">${p.name}</div>
                                 <div class="product-price">¥${p.price}</div>
@@ -1293,10 +1344,39 @@
             if (e.target === document.getElementById('reviewModal')) closeReviewModal();
         });
 
+        // Parse URL parameters
+        function parseUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('keyword')) {
+                currentKeyword = params.get('keyword');
+                document.getElementById('searchInput').value = currentKeyword;
+            }
+            if (params.get('category')) {
+                // Need to find category ID by name after loading categories
+                window.pendingCategory = params.get('category');
+            }
+            if (params.get('category_id')) {
+                currentCategory = params.get('category_id');
+            }
+        }
+
         // Initialize
+        parseUrlParams();
         checkAuth();
-        loadCategories();
-        loadProducts();
+        loadCategories().then(() => {
+            // If category name was passed in URL, find and select it
+            if (window.pendingCategory) {
+                const categoryRadios = document.querySelectorAll('input[name="category"]');
+                categoryRadios.forEach(radio => {
+                    const label = radio.parentElement.textContent.trim();
+                    if (label === window.pendingCategory) {
+                        radio.checked = true;
+                        currentCategory = radio.value;
+                    }
+                });
+            }
+            loadProducts();
+        });
     </script>
 </body>
 </html>

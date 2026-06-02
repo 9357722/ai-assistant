@@ -12,17 +12,17 @@
         }
 
         :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --bg-dark: #0f0f23;
-            --bg-card: #1a1a3e;
-            --bg-input: #252547;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border-color: #2d2d5e;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
+            --primary: #0071e3;
+            --primary-dark: #0077ed;
+            --bg-dark: #f5f5f7;
+            --bg-card: #ffffff;
+            --bg-input: #f0f0f2;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --border-color: rgba(0,0,0,0.08);
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
         }
 
         body {
@@ -32,14 +32,47 @@
             min-height: 100vh;
         }
 
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse at 40% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2%, -2%) rotate(1deg); }
+            50% { transform: translate(-1%, 1%) rotate(-1deg); }
+            75% { transform: translate(1%, 2%) rotate(0.5deg); }
+        }
+
         /* Header */
         .header {
-            background: linear-gradient(135deg, #1a1a3e 0%, #2d1b69 100%);
+            background: rgba(255, 255, 255, 0.9);
             padding: 1rem 2rem;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .header-content {
@@ -134,13 +167,19 @@
         .item-image {
             width: 100px;
             height: 100px;
-            background: linear-gradient(135deg, #2d2d5e, #1a1a3e);
+            background: var(--bg-input);
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            overflow: hidden;
             flex-shrink: 0;
+        }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .item-info {
@@ -353,7 +392,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.5);
             z-index: 200;
         }
 
@@ -463,7 +502,7 @@
             background: var(--success);
             color: white;
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             z-index: 300;
             transform: translateX(120%);
             transition: transform 0.3s;
@@ -499,6 +538,7 @@
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
     <!-- Header -->
     <header class="header">
         <div class="header-content">
@@ -645,7 +685,7 @@
                     <input type="checkbox" class="item-checkbox"
                         ${selectedItems.has(item.id) ? 'checked' : ''}
                         onchange="toggleItem(${item.id})">
-                    <div class="item-image">${getProductEmoji(item.category_name)}</div>
+                    <div class="item-image">${item.main_image ? `<img src="${item.main_image}" alt="${item.product_name}">` : '📦'}</div>
                     <div class="item-info">
                         <div class="item-name">${item.product_name}</div>
                         <div class="item-platform">${item.platform || ''}</div>

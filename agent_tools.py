@@ -14,7 +14,7 @@ async def search_product_price(query: str) -> str:
     conn = await aiomysql.connect(
         host='host.docker.internal',
         user='root',
-        password='108045',
+        password=os.getenv('DB_PASSWORD', ''),
         db='product_db',
         charset='utf8mb4',
         use_unicode=True
@@ -59,7 +59,7 @@ async def web_search(query: str) -> str:
     conn = await aiomysql.connect(
         host='host.docker.internal',
         user='root',
-        password='108045',
+        password=os.getenv('DB_PASSWORD', ''),
         db='product_db',
         charset='utf8mb4',
         use_unicode=True

@@ -8,20 +8,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-tertiary: #1a1a25;
-            --bg-card: #22222f;
-            --text-primary: #f0f0f5;
-            --text-secondary: #8888a0;
-            --text-muted: #55556a;
-            --accent: #6366f1;
-            --accent-light: #818cf8;
-            --accent-hover: #4f46e5;
-            --orange: #f59e0b;
-            --green: #10b981;
-            --red: #ef4444;
-            --border: rgba(255, 255, 255, 0.06);
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f0f0f2;
+            --bg-card: #ffffff;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-muted: #86868b;
+            --accent: #0071e3;
+            --accent-light: #4da3ff;
+            --accent-hover: #0077ed;
+            --orange: #ff9500;
+            --green: #34c759;
+            --red: #ff3b30;
+            --border: rgba(0, 0, 0, 0.08);
             --radius: 16px;
             --radius-sm: 12px;
         }
@@ -37,17 +37,18 @@
 
         /* Header */
         .header {
-            background: var(--bg-secondary);
+            background: rgba(255, 255, 255, 0.9);
             border-bottom: 1px solid var(--border);
             padding: 16px 0;
             position: sticky;
             top: 0;
             z-index: 100;
             backdrop-filter: blur(20px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .header-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 0 24px;
             display: flex;
@@ -64,18 +65,19 @@
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             background: linear-gradient(135deg, var(--accent), #8b5cf6);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
         .logo-text h1 {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
         }
 
@@ -93,12 +95,12 @@
 
         .search-bar input {
             width: 100%;
-            padding: 12px 48px 12px 20px;
+            padding: 14px 120px 14px 24px;
             background: var(--bg-tertiary);
             border: 2px solid var(--border);
-            border-radius: 24px;
+            border-radius: 28px;
             color: var(--text-primary);
-            font-size: 14px;
+            font-size: 15px;
             outline: none;
             transition: all 0.3s;
         }
@@ -117,24 +119,26 @@
             right: 4px;
             top: 4px;
             bottom: 4px;
-            padding: 0 20px;
-            background: var(--accent);
+            padding: 0 24px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
             color: white;
             border: none;
-            border-radius: 20px;
+            border-radius: 24px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 14px;
             transition: all 0.2s;
         }
 
         .search-bar button:hover {
-            background: var(--accent-hover);
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
         }
 
         .nav-link {
@@ -142,8 +146,8 @@
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
             transition: all 0.2s;
         }
 
@@ -158,8 +162,8 @@
 
         .cart-badge {
             position: absolute;
-            top: 0;
-            right: 0;
+            top: 2px;
+            right: 2px;
             background: var(--red);
             color: white;
             font-size: 10px;
@@ -167,115 +171,352 @@
             border-radius: 10px;
             min-width: 18px;
             text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .btn-login {
-            padding: 8px 20px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-login:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
-            padding: 60px 24px;
-            text-align: center;
-        }
-
-        .hero h2 {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-light));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero p {
-            font-size: 18px;
-            color: var(--text-secondary);
-            margin-bottom: 32px;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-        }
-
-        .btn-primary {
-            padding: 14px 32px;
+            padding: 10px 24px;
             background: linear-gradient(135deg, var(--accent), #8b5cf6);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
 
-        .btn-primary:hover {
+        .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
         }
 
-        .btn-secondary {
-            padding: 14px 32px;
-            background: transparent;
-            color: var(--text-primary);
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-size: 16px;
+        /* Hero Carousel */
+        .hero-carousel {
+            position: relative;
+            height: 480px;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
+        .carousel-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(10, 10, 15, 0.7), rgba(10, 10, 15, 0.3));
+            z-index: 1;
+        }
+
+        .slide-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            filter: blur(2px);
+        }
+
+        .slide-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 700px;
+            padding: 0 24px;
+        }
+
+        .slide-tag {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            color: var(--accent-light);
+            font-size: 13px;
             font-weight: 600;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .slide-content h2 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            line-height: 1.2;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .slide-content p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .slide-btn {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+            text-decoration: none;
+        }
+
+        .slide-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
+        }
+
+        .carousel-dots {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 3;
+        }
+
+        .carousel-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
             cursor: pointer;
             transition: all 0.3s;
         }
 
-        .btn-secondary:hover {
-            border-color: var(--accent);
-            color: var(--accent);
+        .carousel-dot.active {
+            background: white;
+            width: 32px;
+            border-radius: 6px;
         }
 
-        /* Categories */
-        .section {
-            max-width: 1200px;
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 3;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-btn.prev { left: 24px; }
+        .carousel-btn.next { right: 24px; }
+
+        /* Streaming Products */
+        .stream-section {
+            padding: 60px 0;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+
+        .stream-header {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 40px 24px;
+            padding: 0 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stream-title {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .stream-title span {
+            background: linear-gradient(135deg, var(--accent), var(--orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stream-track {
+            display: flex;
+            gap: 20px;
+            animation: streamScroll 30s linear infinite;
+            width: max-content;
+        }
+
+        .stream-track:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes streamScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .stream-card {
+            min-width: 280px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .stream-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+            box-shadow: 0 16px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .stream-img {
+            height: 200px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stream-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .stream-card:hover .stream-img img {
+            transform: scale(1.05);
+        }
+
+        .stream-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            padding: 4px 12px;
+            background: var(--red);
+            color: white;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 1;
+        }
+
+        .stream-info {
+            padding: 16px;
+        }
+
+        .stream-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .stream-price {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--red);
+        }
+
+        .stream-price .original {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            font-weight: 400;
+            margin-left: 8px;
+        }
+
+        .stream-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Section Styles */
+        .section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 48px 24px;
         }
 
         .section-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .section-title {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .icon {
+            font-size: 28px;
         }
 
         .section-link {
             color: var(--accent);
             text-decoration: none;
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
         }
 
+        .section-link:hover {
+            gap: 8px;
+        }
+
+        /* Categories Grid */
         .categories-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -286,21 +527,37 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 24px;
+            padding: 28px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .category-card:hover::before {
+            opacity: 1;
         }
 
         .category-card:hover {
             border-color: var(--accent);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
         }
 
         .category-icon {
-            font-size: 40px;
-            margin-bottom: 12px;
+            font-size: 42px;
+            margin-bottom: 14px;
+            display: block;
         }
 
         .category-name {
@@ -314,10 +571,10 @@
             color: var(--text-muted);
         }
 
-        /* Products Grid */
+        /* Product Grid */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 20px;
         }
 
@@ -331,19 +588,42 @@
         }
 
         .product-card:hover {
+            transform: translateY(-6px);
             border-color: var(--accent);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.15);
         }
 
-        .product-image {
-            width: 100%;
-            height: 200px;
+        .product-img {
+            height: 220px;
             background: var(--bg-tertiary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover .product-img img {
+            transform: scale(1.05);
+        }
+
+        .product-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 10px;
+            background: rgba(99, 102, 241, 0.9);
+            color: white;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
         }
 
         .product-info {
@@ -351,126 +631,134 @@
         }
 
         .product-name {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            line-height: 1.4;
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 10px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            line-height: 1.4;
+        }
+
+        .product-bottom {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
         }
 
         .product-price {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--orange);
-            margin-bottom: 8px;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--red);
         }
 
-        .product-meta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .product-price .symbol {
+            font-size: 14px;
+        }
+
+        .product-stats {
             font-size: 12px;
             color: var(--text-muted);
         }
 
-        .product-platform {
-            background: var(--bg-tertiary);
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-
-        .product-sales {
-            color: var(--text-secondary);
-        }
-
         /* AI Recommendation */
         .ai-section {
-            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-            border-radius: var(--radius);
-            padding: 32px;
-            margin-bottom: 40px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            border-radius: 24px;
+            padding: 40px;
+            margin: 48px auto;
+            max-width: 1400px;
+            border: 1px solid rgba(99, 102, 241, 0.1);
         }
 
         .ai-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
         .ai-icon {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
             background: linear-gradient(135deg, var(--accent), #8b5cf6);
-            border-radius: 12px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
         }
 
-        .ai-title h3 {
-            font-size: 18px;
-            font-weight: 600;
+        .ai-header h3 {
+            font-size: 22px;
+            font-weight: 700;
         }
 
-        .ai-title p {
-            font-size: 13px;
+        .ai-header p {
             color: var(--text-secondary);
+            font-size: 14px;
         }
 
-        .ai-products {
-            display: flex;
+        .ai-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
-            overflow-x: auto;
-            padding-bottom: 8px;
         }
 
-        .ai-product-card {
-            min-width: 200px;
+        .ai-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            padding: 16px;
+            padding: 20px;
+            transition: all 0.3s;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
-        .ai-product-card:hover {
+        .ai-card:hover {
             border-color: var(--accent);
+            transform: translateY(-4px);
         }
 
-        .ai-product-name {
-            font-size: 13px;
+        .ai-card-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .ai-card-name {
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
-        .ai-product-price {
-            font-size: 16px;
+        .ai-card-price {
+            color: var(--red);
             font-weight: 700;
-            color: var(--orange);
+            font-size: 18px;
         }
 
-        .ai-product-reason {
-            font-size: 11px;
+        .ai-card-reason {
+            font-size: 12px;
             color: var(--text-muted);
             margin-top: 8px;
+            line-height: 1.4;
         }
 
         /* Footer */
         .footer {
             background: var(--bg-secondary);
             border-top: 1px solid var(--border);
-            padding: 40px 24px;
+            padding: 48px 24px 24px;
             margin-top: 60px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
         }
 
         .footer-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -478,383 +766,492 @@
         }
 
         .footer-section h4 {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 600;
             margin-bottom: 16px;
         }
 
-        .footer-links {
-            list-style: none;
-        }
-
-        .footer-links li {
-            margin-bottom: 8px;
-        }
-
-        .footer-links a {
+        .footer-section p,
+        .footer-section a {
             color: var(--text-secondary);
-            text-decoration: none;
             font-size: 13px;
-            transition: color 0.2s;
+            line-height: 2;
+            text-decoration: none;
+            display: block;
         }
 
-        .footer-links a:hover {
-            color: var(--text-primary);
+        .footer-section a:hover {
+            color: var(--accent);
         }
 
         .footer-bottom {
-            max-width: 1200px;
-            margin: 24px auto 0;
+            max-width: 1400px;
+            margin: 32px auto 0;
             padding-top: 24px;
             border-top: 1px solid var(--border);
             text-align: center;
-            font-size: 12px;
             color: var(--text-muted);
+            font-size: 13px;
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .categories-grid, .products-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
-            .header-content {
-                flex-wrap: wrap;
-                gap: 12px;
-            }
-
-            .search-bar {
-                order: 3;
-                max-width: 100%;
-                margin: 0;
-            }
-
-            .categories-grid, .products-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .hero h2 {
-                font-size: 28px;
-            }
-
-            .footer-content {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .categories-grid, .products-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .hero-actions {
-                flex-direction: column;
-            }
+            .hero-carousel { height: 320px; }
+            .slide-content h2 { font-size: 28px; }
+            .categories-grid { grid-template-columns: repeat(2, 1fr); }
+            .ai-grid { grid-template-columns: repeat(2, 1fr); }
+            .footer-content { grid-template-columns: repeat(2, 1fr); }
+            .search-bar { display: none; }
         }
     </style>
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="bg-animation"></div>
+
     <!-- Header -->
     <header class="header">
         <div class="header-content">
             <a href="/" class="logo">
                 <div class="logo-icon">🤖</div>
                 <div class="logo-text">
-                    <h1>AI 电商导购</h1>
-                    <span>智能推荐 · 轻松购物</span>
+                    <h1>AI 智购</h1>
+                    <span>智能电商导购平台</span>
                 </div>
             </a>
-
             <div class="search-bar">
-                <input type="text" id="search-input" placeholder="搜索商品..." />
-                <button onclick="searchProducts()">搜索</button>
+                <input type="text" id="searchInput" placeholder="搜索你想要的商品...">
+                <button onclick="searchProducts()">🔍 搜索</button>
             </div>
-
             <div class="header-actions">
-                <a href="/static/cart.html" class="nav-link cart">
+                <a href="/product.html" class="nav-link">商品</a>
+                <a href="/cart.html" class="nav-link cart">
                     🛒 购物车
-                    <span class="cart-badge" id="cart-count">0</span>
+                    <span class="cart-badge" id="cartBadge" style="display:none">0</span>
                 </a>
-                <a href="/static/orders.html" class="nav-link">📦 订单</a>
-                <a href="/static/user.html" class="nav-link">👤 我的</a>
-                <button class="btn-login" id="login-btn" onclick="showLogin()">登录</button>
+                <a href="/orders.html" class="nav-link">订单</a>
+                <button class="btn-login" id="loginBtn" onclick="goToUser()">登录</button>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <h2>AI 驱动的智能购物体验</h2>
-        <p>基于大语言模型，为您提供个性化商品推荐和智能客服服务</p>
-        <div class="hero-actions">
-            <button class="btn-primary" onclick="window.location.href='/static/product.html'">
-                🛍️ 开始购物
-            </button>
-            <button class="btn-secondary" onclick="window.location.href='/chat.html'">
-                💬 AI 客服
-            </button>
-        </div>
-    </section>
-
-    <!-- Categories -->
-    <section class="section">
-        <div class="section-header">
-            <h2 class="section-title">商品分类</h2>
-            <a href="/static/product.html" class="section-link">查看全部 →</a>
-        </div>
-        <div class="categories-grid" id="categories-grid">
-            <!-- Categories will be loaded here -->
-        </div>
-    </section>
-
-    <!-- AI Recommendations -->
-    <section class="section">
-        <div class="ai-section">
-            <div class="ai-header">
-                <div class="ai-icon">✨</div>
-                <div class="ai-title">
-                    <h3>AI 为你推荐</h3>
-                    <p>基于你的浏览历史和偏好，智能推荐最适合的商品</p>
+    <!-- Hero Carousel -->
+    <div class="hero-carousel">
+        <div class="carousel-track" id="carouselTrack">
+            <div class="carousel-slide">
+                <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1607082349566-187342175e2f?w=1920&q=80'); background-size: cover; background-position: center;"></div>
+                <div class="slide-content">
+                    <span class="slide-tag">🔥 限时特惠</span>
+                    <h2>618 年中大促</h2>
+                    <p>全场商品低至 5 折起，AI 智能推荐帮你找到最划算的好物</p>
+                    <a href="/product.html" class="slide-btn">立即抢购 →</a>
                 </div>
             </div>
-            <div class="ai-products" id="ai-recommendations">
-                <!-- AI recommendations will be loaded here -->
+            <div class="carousel-slide">
+                <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=1920&q=80'); background-size: cover; background-position: center;"></div>
+                <div class="slide-content">
+                    <span class="slide-tag">🤖 AI 智能推荐</span>
+                    <h2>比价神器</h2>
+                    <p>一键对比京东、淘宝、拼多多价格，AI 帮你找到最低价</p>
+                    <a href="/chat.html" class="slide-btn">体验 AI 助手 →</a>
+                </div>
+            </div>
+            <div class="carousel-slide">
+                <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1920&q=80'); background-size: cover; background-position: center;"></div>
+                <div class="slide-content">
+                    <span class="slide-tag">📱 新品首发</span>
+                    <h2>旗舰手机专场</h2>
+                    <p>最新旗舰手机首发优惠，12期免息分期</p>
+                    <a href="/product.html?category=手机" class="slide-btn">查看详情 →</a>
+                </div>
+            </div>
+            <div class="carousel-slide">
+                <div class="slide-bg" style="background-image: url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1920&q=80'); background-size: cover; background-position: center;"></div>
+                <div class="slide-content">
+                    <span class="slide-tag">🎧 数码好物</span>
+                    <h2>耳机音响专场</h2>
+                    <p>降噪耳机、蓝牙音箱，音质与性价比兼得</p>
+                    <a href="/product.html?category=耳机" class="slide-btn">立即选购 →</a>
+                </div>
             </div>
         </div>
-    </section>
+        <button class="carousel-btn prev" onclick="moveCarousel(-1)">‹</button>
+        <button class="carousel-btn next" onclick="moveCarousel(1)">›</button>
+        <div class="carousel-dots" id="carouselDots"></div>
+    </div>
+
+    <!-- Streaming Products -->
+    <div class="stream-section">
+        <div class="stream-header">
+            <h2 class="stream-title">⚡ <span>限时秒杀</span> · 每日精选好物</h2>
+            <a href="/product.html" class="section-link">查看更多 →</a>
+        </div>
+        <div class="stream-track" id="streamTrack">
+            <!-- Filled by JS -->
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title"><span class="icon">📂</span> 商品分类</h2>
+            <a href="/product.html" class="section-link">查看全部 →</a>
+        </div>
+        <div class="categories-grid" id="categoriesGrid">
+            <div class="category-card" onclick="window.location.href='/product.html?category=手机'">
+                <span class="category-icon">📱</span>
+                <div class="category-name">手机</div>
+                <div class="category-count">精选好物</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=电脑'">
+                <span class="category-icon">💻</span>
+                <div class="category-name">电脑</div>
+                <div class="category-count">性能之选</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=平板'">
+                <span class="category-icon">📱</span>
+                <div class="category-name">平板</div>
+                <div class="category-count">轻薄便携</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=耳机'">
+                <span class="category-icon">🎧</span>
+                <div class="category-name">耳机</div>
+                <div class="category-count">高音质推荐</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=智能手表'">
+                <span class="category-icon">⌚</span>
+                <div class="category-name">智能手表</div>
+                <div class="category-count">健康监测</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=服装'">
+                <span class="category-icon">👔</span>
+                <div class="category-name">服装</div>
+                <div class="category-count">时尚穿搭</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=美妆'">
+                <span class="category-icon">💄</span>
+                <div class="category-name">美妆</div>
+                <div class="category-count">护肤彩妆</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=食品'">
+                <span class="category-icon">🍪</span>
+                <div class="category-name">食品</div>
+                <div class="category-count">美味零食</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=家居'">
+                <span class="category-icon">🏠</span>
+                <div class="category-name">家居</div>
+                <div class="category-count">品质生活</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=家电'">
+                <span class="category-icon">📺</span>
+                <div class="category-name">家电</div>
+                <div class="category-count">智能家电</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=运动'">
+                <span class="category-icon">⚽</span>
+                <div class="category-name">运动</div>
+                <div class="category-count">运动装备</div>
+            </div>
+            <div class="category-card" onclick="window.location.href='/product.html?category=母婴'">
+                <span class="category-icon">👶</span>
+                <div class="category-name">母婴</div>
+                <div class="category-count">母婴用品</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Recommendation -->
+    <div class="ai-section" id="aiSection">
+        <div class="ai-header">
+            <div class="ai-icon">🤖</div>
+            <div>
+                <h3>AI 智能推荐</h3>
+                <p>基于您的偏好和浏览历史，为您精选以下商品</p>
+            </div>
+        </div>
+        <div class="ai-grid" id="aiGrid">
+            <div class="loading"><div class="loading-spinner"></div><p style="margin-top:12px">加载推荐中...</p></div>
+        </div>
+    </div>
 
     <!-- Hot Products -->
-    <section class="section">
+    <div class="section">
         <div class="section-header">
-            <h2 class="section-title">热门商品</h2>
-            <a href="/static/product.html?sort=sales" class="section-link">更多热门 →</a>
+            <h2 class="section-title"><span class="icon">🔥</span> 热门商品</h2>
+            <a href="/product.html" class="section-link">查看全部 →</a>
         </div>
-        <div class="products-grid" id="hot-products">
-            <!-- Hot products will be loaded here -->
+        <div class="products-grid" id="hotProducts">
+            <div class="loading"><div class="loading-spinner"></div></div>
         </div>
-    </section>
+    </div>
 
     <!-- New Products -->
-    <section class="section">
+    <div class="section">
         <div class="section-header">
-            <h2 class="section-title">新品上架</h2>
-            <a href="/static/product.html?sort=created_at" class="section-link">更多新品 →</a>
+            <h2 class="section-title"><span class="icon">✨</span> 新品上架</h2>
+            <a href="/product.html" class="section-link">查看全部 →</a>
         </div>
-        <div class="products-grid" id="new-products">
-            <!-- New products will be loaded here -->
+        <div class="products-grid" id="newProducts">
+            <div class="loading"><div class="loading-spinner"></div></div>
         </div>
-    </section>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-section">
-                <h4>购物指南</h4>
-                <ul class="footer-links">
-                    <li><a href="#">购物流程</a></li>
-                    <li><a href="#">支付方式</a></li>
-                    <li><a href="#">配送说明</a></li>
-                    <li><a href="#">售后服务</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h4>会员服务</h4>
-                <ul class="footer-links">
-                    <li><a href="/static/user.html">会员中心</a></li>
-                    <li><a href="/static/orders.html">订单查询</a></li>
-                    <li><a href="#">积分规则</a></li>
-                    <li><a href="#">优惠活动</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
                 <h4>关于我们</h4>
-                <ul class="footer-links">
-                    <li><a href="#">公司介绍</a></li>
-                    <li><a href="#">联系我们</a></li>
-                    <li><a href="#">加入我们</a></li>
-                    <li><a href="#">合作伙伴</a></li>
-                </ul>
+                <p>AI 智能电商导购平台</p>
+                <p>让购物更智能、更省钱</p>
             </div>
             <div class="footer-section">
-                <h4>技术支持</h4>
-                <ul class="footer-links">
-                    <li><a href="/docs">API 文档</a></li>
-                    <li><a href="#">开发指南</a></li>
-                    <li><a href="#">常见问题</a></li>
-                    <li><a href="#">技术博客</a></li>
-                </ul>
+                <h4>快速链接</h4>
+                <a href="/product.html">商品中心</a>
+                <a href="/cart.html">购物车</a>
+                <a href="/orders.html">我的订单</a>
+            </div>
+            <div class="footer-section">
+                <h4>AI 服务</h4>
+                <a href="/chat.html">AI 助手</a>
+                <a href="#">智能推荐</a>
+                <a href="#">价格对比</a>
+            </div>
+            <div class="footer-section">
+                <h4>联系我们</h4>
+                <p>邮箱: support@aishopping.com</p>
+                <p>电话: 400-888-8888</p>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2026 AI 智能电商导购平台 - 基于 FastAPI + LangChain + DeepSeek 构建</p>
+            © 2026 AI 智能电商导购平台 - 让 AI 为您的购物保驾护航
         </div>
     </footer>
 
     <script>
         const API_BASE = '';
+        let currentSlide = 0;
+        const totalSlides = 4;
 
-        // 检查登录状态
-        function checkLogin() {
-            const token = localStorage.getItem('token');
-            const username = localStorage.getItem('username');
-
-            if (token && username) {
-                document.getElementById('login-btn').textContent = username;
-                document.getElementById('login-btn').onclick = () => window.location.href = '/static/user.html';
-                loadCartCount();
+        // Carousel
+        function initCarousel() {
+            const dotsContainer = document.getElementById('carouselDots');
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.className = `carousel-dot ${i === 0 ? 'active' : ''}`;
+                dot.onclick = () => goToSlide(i);
+                dotsContainer.appendChild(dot);
             }
+            setInterval(() => moveCarousel(1), 5000);
         }
 
-        // 加载购物车数量
-        async function loadCartCount() {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            try {
-                const response = await fetch(`${API_BASE}/api/cart`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                document.getElementById('cart-count').textContent = data.total_items || 0;
-            } catch (error) {
-                console.error('加载购物车失败:', error);
-            }
+        function moveCarousel(direction) {
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            updateCarousel();
         }
 
-        // 加载分类
-        async function loadCategories() {
-            try {
-                const response = await fetch(`${API_BASE}/api/products/categories/list`);
-                const categories = await response.json();
-
-                const grid = document.getElementById('categories-grid');
-                const icons = ['📱', '🎧', '💻', '📺'];
-
-                grid.innerHTML = categories.map((cat, index) => `
-                    <div class="category-card" onclick="window.location.href='/static/product.html?category_id=${cat.id}'">
-                        <div class="category-icon">${icons[index % icons.length]}</div>
-                        <div class="category-name">${cat.name}</div>
-                        <div class="category-count">${cat.children ? cat.children.length : 0} 个子分类</div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                console.error('加载分类失败:', error);
-            }
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
         }
 
-        // 加载热门商品
-        async function loadHotProducts() {
-            try {
-                const response = await fetch(`${API_BASE}/api/products?sort_by=sales&sort_order=desc&page_size=8`);
-                const data = await response.json();
-
-                renderProducts('hot-products', data.items);
-            } catch (error) {
-                console.error('加载热门商品失败:', error);
-            }
+        function updateCarousel() {
+            document.getElementById('carouselTrack').style.transform = `translateX(-${currentSlide * 100}%)`;
+            document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === currentSlide);
+            });
         }
 
-        // 加载新品
-        async function loadNewProducts() {
+        // Streaming Products
+        async function loadStreamProducts() {
             try {
-                const response = await fetch(`${API_BASE}/api/products?sort_by=created_at&sort_order=desc&page_size=8`);
-                const data = await response.json();
-
-                renderProducts('new-products', data.items);
-            } catch (error) {
-                console.error('加载新品失败:', error);
-            }
-        }
-
-        // 加载 AI 推荐
-        async function loadAIRecommendations() {
-            const token = localStorage.getItem('token');
-            const container = document.getElementById('ai-recommendations');
-
-            if (!token) {
-                container.innerHTML = '<p style="color: var(--text-muted)">登录后获取个性化推荐</p>';
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/api/ai/recommendations?limit=5`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-
-                if (data.recommendations && data.recommendations.length > 0) {
-                    container.innerHTML = data.recommendations.map(rec => `
-                        <div class="ai-product-card" onclick="window.location.href='/static/product.html?id=${rec.id}'">
-                            <div class="ai-product-name">${rec.name}</div>
-                            <div class="ai-product-price">¥${rec.price}</div>
-                            <div class="ai-product-reason">${rec.reason}</div>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<p style="color: var(--text-muted)">暂无推荐</p>';
+                const res = await fetch(`${API_BASE}/api/products?page_size=20`);
+                const data = await res.json();
+                if (data.items && data.items.length > 0) {
+                    renderStreamProducts(data.items);
                 }
-            } catch (error) {
-                console.error('加载AI推荐失败:', error);
-                container.innerHTML = '<p style="color: var(--text-muted)">推荐加载失败</p>';
+            } catch (err) {
+                console.error('Failed to load stream products:', err);
             }
         }
 
-        // 渲染商品列表
-        function renderProducts(containerId, products) {
-            const container = document.getElementById(containerId);
+        function renderStreamProducts(products) {
+            const container = document.getElementById('streamTrack');
+            const discounts = ['-20%', '-15%', '-30%', '-25%', '-10%', '-40%', '-35%', '-50%'];
 
-            if (!products || products.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-muted)">暂无商品</p>';
-                return;
-            }
+            // Duplicate for infinite scroll
+            const allProducts = [...products, ...products];
 
-            container.innerHTML = products.map(product => `
-                <div class="product-card" onclick="window.location.href='/static/product.html?id=${product.id}'">
-                    <div class="product-image">
-                        ${product.main_image ? `<img src="${product.main_image}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover">` : '📦'}
+            container.innerHTML = allProducts.map((p, i) => `
+                <div class="stream-card" onclick="window.location.href='/product.html?id=${p.id}'">
+                    <div class="stream-img">
+                        <span class="stream-badge">${discounts[i % discounts.length]} OFF</span>
+                        <img src="${p.main_image || 'https://picsum.photos/seed/default/400/400'}" alt="${p.name}" loading="lazy">
                     </div>
-                    <div class="product-info">
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-price">¥${product.price}</div>
-                        <div class="product-meta">
-                            <span class="product-platform">${product.platform}</span>
-                            <span class="product-sales">销量 ${product.sales || 0}</span>
+                    <div class="stream-info">
+                        <div class="stream-name">${p.name}</div>
+                        <div class="stream-price">
+                            ¥${p.price}
+                            <span class="original">¥${(p.price * 1.3).toFixed(0)}</span>
+                        </div>
+                        <div class="stream-meta">
+                            <span>已售 ${p.sales || 0}</span>
+                            <span>⭐ ${p.rating || '5.0'}</span>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 搜索商品
+        // Load products
+        async function loadHotProducts() {
+            try {
+                const res = await fetch(`${API_BASE}/api/products?sort=sales_desc&page_size=8`);
+                const data = await res.json();
+                if (data.items) {
+                    renderProducts('hotProducts', data.items);
+                }
+            } catch (err) {
+                document.getElementById('hotProducts').innerHTML = '<p style="color:var(--text-secondary)">加载失败</p>';
+            }
+        }
+
+        async function loadNewProducts() {
+            try {
+                const res = await fetch(`${API_BASE}/api/products?page_size=8`);
+                const data = await res.json();
+                if (data.items) {
+                    renderProducts('newProducts', data.items);
+                }
+            } catch (err) {
+                document.getElementById('newProducts').innerHTML = '<p style="color:var(--text-secondary)">加载失败</p>';
+            }
+        }
+
+        function renderProducts(containerId, products) {
+            const container = document.getElementById(containerId);
+
+            container.innerHTML = products.map((p, i) => `
+                <div class="product-card" onclick="window.location.href='/product.html?id=${p.id}'">
+                    <div class="product-img">
+                        ${i < 3 ? '<span class="product-tag">热卖</span>' : ''}
+                        <img src="${p.main_image || 'https://picsum.photos/seed/default/400/400'}" alt="${p.name}" loading="lazy">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-bottom">
+                            <div class="product-price"><span class="symbol">¥</span>${p.price}</div>
+                            <div class="product-stats">${p.sales || 0}人付款</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load AI recommendations
+        async function loadAIRecommendations() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                document.getElementById('aiGrid').innerHTML = `
+                    <div style="grid-column: span 4; text-align: center; padding: 40px;">
+                        <p style="color: var(--text-secondary); margin-bottom: 16px;">登录后查看 AI 为您推荐的商品</p>
+                        <a href="/user.html" class="slide-btn" style="font-size: 14px; padding: 12px 28px;">立即登录</a>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/ai/recommendations`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.items && data.items.length > 0) {
+                    document.getElementById('aiGrid').innerHTML = data.items.slice(0, 4).map((p, i) => `
+                        <div class="ai-card" onclick="window.location.href='/product.html?id=${p.id}'">
+                            <img class="ai-card-img" src="${p.main_image || 'https://picsum.photos/seed/ai${i}/400/300'}" alt="${p.name}" loading="lazy">
+                            <div class="ai-card-name">${p.name}</div>
+                            <div class="ai-card-price">¥${p.price}</div>
+                            <div class="ai-card-reason">AI 推荐指数: ⭐⭐⭐⭐⭐</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error('Failed to load AI recommendations:', err);
+            }
+        }
+
+        // Check auth
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            if (token && username) {
+                document.getElementById('loginBtn').textContent = username;
+                document.getElementById('loginBtn').onclick = () => window.location.href = '/user.html';
+                loadCartCount();
+            }
+        }
+
+        async function loadCartCount() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_BASE}/api/cart`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const count = data.items ? data.items.length : 0;
+                    const badge = document.getElementById('cartBadge');
+                    if (count > 0) {
+                        badge.textContent = count;
+                        badge.style.display = 'block';
+                    }
+                }
+            } catch (err) {}
+        }
+
+        function goToUser() {
+            window.location.href = '/user.html';
+        }
+
         function searchProducts() {
-            const keyword = document.getElementById('search-input').value.trim();
+            const keyword = document.getElementById('searchInput').value.trim();
             if (keyword) {
-                window.location.href = `/static/product.html?keyword=${encodeURIComponent(keyword)}`;
+                window.location.href = `/product.html?keyword=${encodeURIComponent(keyword)}`;
             }
         }
 
-        // 显示登录
-        function showLogin() {
-            window.location.href = '/static/user.html';
-        }
-
-        // 搜索框回车
-        document.getElementById('search-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchProducts();
-            }
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchProducts();
         });
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            checkLogin();
-            loadCategories();
-            loadHotProducts();
-            loadNewProducts();
-            loadAIRecommendations();
-        });
+        // Init
+        initCarousel();
+        checkAuth();
+        loadStreamProducts();
+        loadHotProducts();
+        loadNewProducts();
+        loadAIRecommendations();
     </script>
 </body>
 </html>

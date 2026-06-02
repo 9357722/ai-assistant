@@ -5,6 +5,9 @@ import time
 from fastapi import Header, HTTPException, Request
 from collections import defaultdict
 
+# 获取当前脚本所在目录
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # 导入用户路由模块
 from routes.user import router as user_router
 from routes.product import router as product_router
@@ -83,8 +86,9 @@ vector_collection = None
 if SILICONFLOW_KEY:
     try:
         vector_collection = init_vector_db(api_key=SILICONFLOW_KEY)
+        print("✅ 向量数据库初始化成功")
     except Exception as e:
-        print(f"⚠️ 向量数据库初始化失败: {e}")
+        print(f"⚠️ 向量数据库初始化失败，RAG功能将不可用: {e}")
 
 # 初始化聊天会话
 chat_session = ChatSession(system_prompt=SYSTEM_PROMPT, model=langchain_model)
@@ -107,7 +111,7 @@ app.include_router(admin_router)
 
 # 静态文件服务
 from fastapi.staticfiles import StaticFiles
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 # ================== API 鉴权配置 ==================
 # 有效的 API Key 列表（实际项目中存数据库或环境变量）
 VALID_API_KEYS = {"sk-agent-key-001", "sk-agent-key-002"}
@@ -236,7 +240,7 @@ async def add_product(request: AddProductRequest):
 
 @app.post("/add_product_db")
 async def add_product_db(request: AddProductDBRequest):
-    conn = pymysql.connect(host='localhost', user='root', password='108045', database='product_db', charset='utf8mb4')
+    conn = pymysql.connect(host='localhost', user='root', password=os.getenv("DB_PASSWORD", ""), database='product_db', charset='utf8mb4')
     cursor = conn.cursor()
     cursor.execute("INSERT INTO products (name, price, platform) VALUES (%s, %s, %s)", (request.name, request.price, request.platform))
     conn.commit()
@@ -245,7 +249,7 @@ async def add_product_db(request: AddProductDBRequest):
 
 @app.put("/update_price")
 async def update_price(request: UpdatePriceRequest):
-    conn = pymysql.connect(host='localhost', user='root', password='108045', database='product_db', charset='utf8mb4')
+    conn = pymysql.connect(host='localhost', user='root', password=os.getenv("DB_PASSWORD", ""), database='product_db', charset='utf8mb4')
     cursor = conn.cursor()
     cursor.execute("UPDATE products SET price=%s WHERE id=%s", (request.new_price, request.product_id))
     conn.commit()
@@ -255,7 +259,7 @@ async def update_price(request: UpdatePriceRequest):
 
 @app.delete("/delete_product")
 async def delete_product(request: DeleteProductRequest):
-    conn = pymysql.connect(host='localhost', user='root', password='108045', database='product_db', charset='utf8mb4')
+    conn = pymysql.connect(host='localhost', user='root', password=os.getenv("DB_PASSWORD", ""), database='product_db', charset='utf8mb4')
     cursor = conn.cursor()
     cursor.execute("DELETE FROM products WHERE id=%s", (request.product_id,))
     conn.commit()
@@ -268,42 +272,41 @@ from agent_tools import agent as agent_executor
 
 # ================== 页面路由 ==================
 from fastapi.responses import HTMLResponse
-import os
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """首页"""
-    with open("static/index.html", "r", encoding="utf-8") as f:
+    with open(os.path.join(BASE_DIR, "static", "index.html"), "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/product.html", response_class=HTMLResponse)
 async def product_page():
     """商品页"""
-    with open("static/product.html", "r", encoding="utf-8") as f:
+    with open(os.path.join(BASE_DIR, "static", "product.html"), "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/cart.html", response_class=HTMLResponse)
 async def cart_page():
     """购物车页"""
-    with open("static/cart.html", "r", encoding="utf-8") as f:
+    with open(os.path.join(BASE_DIR, "static", "cart.html"), "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/orders.html", response_class=HTMLResponse)
 async def orders_page():
     """订单页"""
-    with open("static/orders.html", "r", encoding="utf-8") as f:
+    with open(os.path.join(BASE_DIR, "static", "orders.html"), "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/user.html", response_class=HTMLResponse)
 async def user_page():
     """用户中心页"""
-    with open("static/user.html", "r", encoding="utf-8") as f:
+    with open(os.path.join(BASE_DIR, "static", "user.html"), "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/chat.html", response_class=HTMLResponse)
 async def chat_page():
     """AI 对话页"""
-    with open("static/chat.html", "r", encoding="utf-8") as f:
+    with open(os.path.join(BASE_DIR, "static", "chat.html"), "r", encoding="utf-8") as f:
         return f.read()
 
 @app.post("/agent")

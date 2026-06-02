@@ -1,5 +1,26 @@
-ai_env/ 
-*.tar 
-*.zip 
-*.tar.gz 
-ai_env/ 
+ai_env/
+*.tar
+*.zip
+*.tar.gz
+
+# 敏感文件
+.env
+.env.*
+.mcp.json
+*_backup.py
+*_backup_*.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 向量数据库（含本地数据）
+my_vectordb/
+
+# LoRA 模型文件
+lora_model/
+lora_output/
+
+# 日志
+*.log

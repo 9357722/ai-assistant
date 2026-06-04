@@ -1,7 +1,9 @@
 /**
  * 公共工具函数
  */
-const API_BASE = '';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? ''  // 本地开发：同源
+    : 'http://120.55.95.8:8000';  // 服务器：指向 API 端口
 
 // XSS 防护：转义 HTML 特殊字符
 function escapeHTML(str) {

@@ -46,10 +46,11 @@ async def lifespan(app):
 app = FastAPI(title="AI 智能电商导购平台", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 允许所有来源
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # 注册路由

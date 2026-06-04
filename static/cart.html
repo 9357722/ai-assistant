@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>购物车 - AI 智能电商导购平台</title>
+    <title>购物车 - 惠购商城</title>
     <style>
         * {
             margin: 0;
@@ -86,7 +86,7 @@
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+            background: linear-gradient(135deg, #0071e3, #00c6fb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-decoration: none;
@@ -542,7 +542,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <a href="/" class="logo">AI 智购</a>
+            <a href="/" class="logo">惠购商城</a>
             <nav class="nav-links">
                 <a href="/">首页</a>
                 <a href="/product.html">商品</a>
@@ -623,8 +623,8 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <script src="/static/common.js"></script>
     <script>
-        const API_BASE = '';
         let cartItems = [];
         let selectedItems = new Set();
         let addresses = [];
@@ -685,11 +685,11 @@
                     <input type="checkbox" class="item-checkbox"
                         ${selectedItems.has(item.id) ? 'checked' : ''}
                         onchange="toggleItem(${item.id})">
-                    <div class="item-image">${item.main_image ? `<img src="${item.main_image}" alt="${item.product_name}">` : '📦'}</div>
+                    <div class="item-image">${item.product_image ? `<img src="${item.product_image}" alt="${escapeHTML(item.product_name)}">` : '📦'}</div>
                     <div class="item-info">
-                        <div class="item-name">${item.product_name}</div>
-                        <div class="item-platform">${item.platform || ''}</div>
-                        <div class="item-price">¥${item.price}</div>
+                        <div class="item-name">${escapeHTML(item.product_name)}</div>
+                        <div class="item-platform">${escapeHTML(item.product_platform || '')}</div>
+                        <div class="item-price">¥${item.product_price}</div>
                     </div>
                     <div class="item-actions">
                         <div class="quantity-control">
@@ -698,7 +698,7 @@
                                 onchange="updateQuantity(${item.id}, this.value)">
                             <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
                         </div>
-                        <div class="item-total">¥${(item.price * item.quantity).toFixed(2)}</div>
+                        <div class="item-total">¥${(item.product_price * item.quantity).toFixed(2)}</div>
                         <button class="delete-btn" onclick="removeItem(${item.id})">🗑️</button>
                     </div>
                 </div>
@@ -751,7 +751,7 @@
         function updateSummary() {
             const selected = cartItems.filter(item => selectedItems.has(item.id));
             const count = selected.reduce((sum, item) => sum + item.quantity, 0);
-            const subtotal = selected.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const subtotal = selected.reduce((sum, item) => sum + (item.product_price * item.quantity), 0);
 
             document.getElementById('summaryCount').textContent = `${count} 件`;
             document.getElementById('summarySubtotal').textContent = `¥${subtotal.toFixed(2)}`;
@@ -829,7 +829,7 @@
 
                 if (res.ok) {
                     const data = await res.json();
-                    addresses = data.items || [];
+                    addresses = Array.isArray(data) ? data : [];
                     renderAddresses();
                     document.getElementById('addressModal').style.display = 'block';
                 } else {
@@ -851,9 +851,9 @@
             container.innerHTML = addresses.map(addr => `
                 <div class="address-item ${selectedAddressId === addr.id ? 'selected' : ''}"
                     onclick="selectAddress(${addr.id})">
-                    <div class="address-name">${addr.name} ${addr.is_default ? '<span style="color: var(--primary); font-size: 0.8rem;">默认</span>' : ''}</div>
-                    <div class="address-detail">${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.detail || ''}</div>
-                    <div class="address-phone">${addr.phone}</div>
+                    <div class="address-name">${escapeHTML(addr.name)} ${addr.is_default ? '<span style="color: var(--primary); font-size: 0.8rem;">默认</span>' : ''}</div>
+                    <div class="address-detail">${escapeHTML(addr.province || '')}${escapeHTML(addr.city || '')}${escapeHTML(addr.district || '')}${escapeHTML(addr.detail || '')}</div>
+                    <div class="address-phone">${escapeHTML(addr.phone)}</div>
                 </div>
             `).join('');
 

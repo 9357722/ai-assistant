@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field
 
 import config
+from db import get_pool
 from auth import get_current_admin, TokenData
 from models.product import ProductCreate, ProductUpdate, ProductResponse
 
@@ -20,21 +21,8 @@ router = APIRouter(prefix="/api/admin", tags=["管理后台"])
 # ============ 数据库连接 ============
 
 async def get_db():
-    """获取数据库连接池"""
-    pool = await aiomysql.create_pool(
-        host=config.DB_HOST,
-        port=config.DB_PORT,
-        user=config.DB_USER,
-        password=config.DB_PASSWORD,
-        db=config.DB_NAME,
-        charset="utf8mb4",
-        autocommit=True,
-    )
-    try:
-        yield pool
-    finally:
-        pool.close()
-        await pool.wait_closed()
+    """获取全局连接池"""
+    return get_pool()
 
 
 # ============ 请求模型 ============
@@ -339,14 +327,19 @@ async def list_orders(
             await cur.execute(order_sql, params + [page_size, offset])
             orders = await cur.fetchall()
 
-            # 获取订单项
+            # 批量获取订单项（避免 N+1 查询）
+            order_ids = [order["id"] for order in orders]
+            items_map = {}
+
+            if order_ids:
+                ph = ",".join(["%s"] * len(order_ids))
+                await cur.execute(f"SELECT * FROM order_items WHERE order_id IN ({ph})", order_ids)
+                for item in await cur.fetchall():
+                    items_map.setdefault(item["order_id"], []).append(item)
+
             order_list = []
             for order in orders:
-                await cur.execute(
-                    "SELECT * FROM order_items WHERE order_id = %s",
-                    (order["id"],)
-                )
-                items = await cur.fetchall()
+                items = items_map.get(order["id"], [])
 
                 # 解析地址快照
                 address_snapshot = order.get("address_snapshot")

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>商品列表 - AI 智能电商导购平台</title>
+    <title>商品列表 - 惠购商城</title>
     <style>
         * {
             margin: 0;
@@ -86,7 +86,7 @@
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+            background: linear-gradient(135deg, #0071e3, #00c6fb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-decoration: none;
@@ -245,6 +245,28 @@
 
         .filter-btn:hover {
             background: var(--primary-dark);
+        }
+
+        /* Search Intent Banner */
+        .search-intent-banner {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.08));
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 12px;
+            align-items: center;
+        }
+        .intent-tag {
+            padding: 4px 12px;
+            background: white;
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #6366f1;
+            font-weight: 500;
         }
 
         /* Product Grid */
@@ -695,7 +717,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <a href="/" class="logo">AI 智购</a>
+            <a href="/" class="logo">惠购商城</a>
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="搜索商品...">
                 <button onclick="searchProducts()">搜索</button>
@@ -783,6 +805,9 @@
                 </div>
             </div>
         </aside>
+
+        <!-- Search Intent Banner -->
+        <div class="search-intent-banner" id="searchIntentBanner" style="display:none;"></div>
 
         <!-- Product Section -->
         <section class="product-section">
@@ -878,8 +903,8 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <script src="/static/common.js"></script>
     <script>
-        const API_BASE = '';
         let currentProduct = null;
         let currentRating = 0;
         let currentPage = 1;
@@ -936,30 +961,59 @@
             container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p style="margin-top: 1rem;">加载中...</p></div>';
 
             try {
-                let url = `${API_BASE}/api/products?page=${currentPage}&page_size=20`;
-                if (currentCategory) url += `&category_id=${currentCategory}`;
-                if (currentPlatform) url += `&platform=${currentPlatform}`;
-                if (currentPriceMin) url += `&min_price=${currentPriceMin}`;
-                if (currentPriceMax) url += `&max_price=${currentPriceMax}`;
-                if (currentKeyword) url += `&keyword=${encodeURIComponent(currentKeyword)}`;
+                let url;
+                let data;
 
-                // Sort
-                switch(currentSort) {
-                    case 'price_asc': url += '&sort_by=price&sort_order=asc'; break;
-                    case 'price_desc': url += '&sort_by=price&sort_order=desc'; break;
-                    case 'sales': url += '&sort_by=sales&sort_order=desc'; break;
-                    case 'rating': url += '&sort_by=rating&sort_order=desc'; break;
+                if (currentKeyword) {
+                    // 有搜索词 → 走四棒搜索引擎
+                    url = `${API_BASE}/api/products/search/ai?keyword=${encodeURIComponent(currentKeyword)}&page=${currentPage}&page_size=20`;
+                    const res = await fetch(url);
+                    data = await res.json();
+
+                    // 展示搜索意图提示
+                    if (data.intent) {
+                        const intent = data.intent;
+                        let tags = [];
+                        if (intent.corrected_query && intent.corrected_query !== intent.original_query) {
+                            tags.push(`已纠正为 "${escapeHTML(intent.corrected_query)}"`);
+                        }
+                        if (intent.category) tags.push(`分类: ${intent.category}`);
+                        if (intent.brand) tags.push(`品牌: ${intent.brand}`);
+                        if (intent.price_range) tags.push(`价格: ¥${Math.round(intent.price_range.min)}-${Math.round(intent.price_range.max)}`);
+                        tags.push(`${data.total} 件商品`);
+
+                        const intentBanner = document.getElementById('searchIntentBanner');
+                        if (intentBanner) {
+                            intentBanner.innerHTML = tags.map(t => `<span class="intent-tag">${t}</span>`).join('');
+                            intentBanner.style.display = 'flex';
+                        }
+                    }
+                } else {
+                    // 无搜索词 → 走普通列表
+                    url = `${API_BASE}/api/products?page=${currentPage}&page_size=20`;
+                    if (currentCategory) url += `&category_id=${currentCategory}`;
+                    if (currentPlatform) url += `&platform=${currentPlatform}`;
+                    if (currentPriceMin) url += `&min_price=${currentPriceMin}`;
+                    if (currentPriceMax) url += `&max_price=${currentPriceMax}`;
+
+                    // Sort
+                    switch(currentSort) {
+                        case 'price_asc': url += '&sort_by=price&sort_order=asc'; break;
+                        case 'price_desc': url += '&sort_by=price&sort_order=desc'; break;
+                        case 'sales': url += '&sort_by=sales&sort_order=desc'; break;
+                        case 'rating': url += '&sort_by=rating&sort_order=desc'; break;
+                    }
+
+                    const res = await fetch(url);
+                    data = await res.json();
                 }
-
-                const res = await fetch(url);
-                const data = await res.json();
 
                 if (data.items && data.items.length > 0) {
                     container.innerHTML = data.items.map(p => `
                         <div class="product-card" onclick="showProductDetail(${p.id})">
                             <div class="product-image">${p.main_image ? `<img src="${p.main_image}" alt="${p.name}">` : '📦'}</div>
                             <div class="product-info">
-                                <div class="product-name">${p.name}</div>
+                                <div class="product-name">${escapeHTML(p.name)}</div>
                                 <div class="product-price">¥${p.price}</div>
                                 <div class="product-meta">
                                     <span class="product-rating">★ ${p.rating || '5.0'}</span>
@@ -1127,11 +1181,11 @@
                     container.innerHTML = data.items.map(review => `
                         <div class="review-card">
                             <div class="review-header">
-                                <span class="review-user">${review.username || '匿名用户'}</span>
+                                <span class="review-user">${escapeHTML(review.username) || '匿名用户'}</span>
                                 <span class="review-date">${new Date(review.created_at).toLocaleDateString()}</span>
                             </div>
                             <div class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
-                            <div class="review-content">${review.content}</div>
+                            <div class="review-content">${escapeHTML(review.content)}</div>
                         </div>
                     `).join('');
                 } else {
@@ -1149,8 +1203,8 @@
                 const data = await res.json();
                 const container = document.getElementById('similarProducts');
 
-                if (data.items && data.items.length > 0) {
-                    container.innerHTML = data.items.slice(0, 4).map(p => `
+                if (data.recommendations && data.recommendations.length > 0) {
+                    container.innerHTML = data.recommendations.slice(0, 4).map(p => `
                         <div class="product-card" onclick="showProductDetail(${p.id})">
                             <div class="product-image">${p.main_image ? `<img src="${p.main_image}" alt="${p.name}">` : '📦'}</div>
                             <div class="product-info">
@@ -1369,7 +1423,7 @@
                 const categoryRadios = document.querySelectorAll('input[name="category"]');
                 categoryRadios.forEach(radio => {
                     const label = radio.parentElement.textContent.trim();
-                    if (label === window.pendingCategory) {
+                    if (label.includes(window.pendingCategory) || window.pendingCategory.includes(label)) {
                         radio.checked = true;
                         currentCategory = radio.value;
                     }

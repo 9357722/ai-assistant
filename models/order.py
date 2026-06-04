@@ -51,7 +51,7 @@ class OrderResponse(BaseModel):
     paid_at: Optional[datetime] = None
     shipped_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
 

@@ -6,7 +6,7 @@ import json
 from typing import List, Optional, Dict, Any
 
 import aiomysql
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 import config
 
@@ -296,7 +296,7 @@ class RecommendationEngine:
 
                 # 基于分类和价格区间推荐
                 price_range = float(product["price"]) * 0.3  # 30% 价格浮动
-                min_price = float(product["price"]) - price_range
+                min_price = max(0, float(product["price"]) - price_range)
                 max_price = float(product["price"]) + price_range
 
                 await cur.execute("""
@@ -311,7 +311,7 @@ class RecommendationEngine:
                     LIMIT %s
                 """, (product_id, product["category_id"], min_price, max_price, limit))
 
-                products = await cur.fetchall()
+                products = list(await cur.fetchall())
 
                 # 如果同分类结果不足，补充其他分类
                 if len(products) < limit:
@@ -381,13 +381,11 @@ class RecommendationEngine:
         ])
 
         try:
-            import os
-            deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-            if not deepseek_key:
+            if not config.DEEPSEEK_API_KEY:
                 return "AI 服务未配置"
 
-            client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
-            response = client.chat.completions.create(
+            client = AsyncOpenAI(api_key=config.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+            response = await client.chat.completions.create(
                 model="deepseek-v4-flash",
                 messages=[
                     {"role": "system", "content": """你是专业的电商导购助手。根据用户需求和商品列表，给出个性化推荐。

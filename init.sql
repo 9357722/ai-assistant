@@ -4,10 +4,23 @@ SET NAMES utf8mb4;
 -- 建表：商品信息
 CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100),
-    price DECIMAL(10,2),
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
     platform VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    category_id INT,
+    description TEXT,
+    main_image VARCHAR(500),
+    images JSON,
+    stock INT DEFAULT 100,
+    sales INT DEFAULT 0,
+    rating DECIMAL(2,1) DEFAULT 5.0,
+    status ENUM('on_sale', 'off_sale') DEFAULT 'on_sale',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_name (name),
+    INDEX idx_category (category_id),
+    INDEX idx_status (status),
+    INDEX idx_sales (sales)
 );
 
 -- 建表：行情资讯
@@ -18,16 +31,16 @@ CREATE TABLE IF NOT EXISTS market_news (
 );
 
 -- 插入初始数据
-INSERT INTO products (name, price, platform) VALUES
-('蓝牙耳机 Pro', 159.00, '京东'),
-('蓝牙耳机 Lite', 59.90, '拼多多'),
-('iPhone 17 Pro', 7999.00, '京东'),
-('iPhone 17 Pro', 7899.00, '淘宝'),
-('华为Mate 70 Pro', 6999.00, '京东'),
-('华为Mate 70 Pro', 6899.00, '拼多多'),
-('红米K80', 2499.00, '淘宝'),
-('小米14', 3999.00, '京东'),
-('小米14', 3899.00, '淘宝');
+INSERT INTO products (name, price, platform, category_id, main_image, stock, sales, rating) VALUES
+('蓝牙耳机 Pro', 159.00, '京东', 2, '/static/products/蓝牙耳机_Pro.jpg', 200, 85, 4.8),
+('蓝牙耳机 Lite', 59.90, '拼多多', 2, '/static/products/蓝牙耳机_Lite.jpg', 500, 320, 4.5),
+('iPhone 17 Pro', 7999.00, '京东', 1, '/static/products/iPhone_17_Pro.jpg', 50, 12, 4.9),
+('iPhone 17 Pro', 7899.00, '淘宝', 1, '/static/products/iPhone_17_Pro.jpg', 80, 25, 4.9),
+('华为Mate 70 Pro', 6999.00, '京东', 1, '/static/products/华为Mate_70_Pro.jpg', 60, 18, 4.8),
+('华为Mate 70 Pro', 6899.00, '拼多多', 1, '/static/products/华为Mate_70_Pro.jpg', 100, 30, 4.8),
+('红米K80', 2499.00, '淘宝', 1, '/static/products/红米K80.jpg', 150, 95, 4.6),
+('小米14', 3999.00, '京东', 1, '/static/products/小米14.jpg', 120, 67, 4.7),
+('小米14', 3899.00, '淘宝', 1, '/static/products/小米14.jpg', 90, 43, 4.7);
 
 INSERT INTO market_news (keyword, content) VALUES
 ('手机行情', '2026年5月：华为Mate 70 Pro均价6999元，iPhone 17 Pro均价7999元，红米K80均价2499元。');
@@ -103,7 +116,9 @@ CREATE TABLE IF NOT EXISTS orders (
     completed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_user_status (user_id, status),
+    INDEX idx_created (created_at)
 );
 
 -- 订单项表
@@ -129,7 +144,8 @@ CREATE TABLE IF NOT EXISTS product_reviews (
     images JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_product_rating (product_id, rating)
 );
 
 -- 插入默认管理员账户 (密码: admin123)
@@ -142,3 +158,7 @@ INSERT INTO categories (name, sort_order) VALUES
 ('耳机', 2),
 ('电脑', 3),
 ('平板', 4);
+
+-- 外键约束（categories 在 products 之后创建，所以用 ALTER TABLE）
+ALTER TABLE products ADD CONSTRAINT fk_product_category
+    FOREIGN KEY (category_id) REFERENCES categories(id);

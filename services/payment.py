@@ -202,10 +202,9 @@ class PaymentService:
         }
 
     def _generate_payment_no(self) -> str:
-        """生成支付单号"""
-        timestamp = int(time.time() * 1000)
-        random_suffix = str(int(time.time()))[-4:]
-        return f"PAY{timestamp}{random_suffix}"
+        """生成支付单号（UUID，不可预测）"""
+        import uuid
+        return f"PAY{uuid.uuid4().hex[:16].upper()}"
 
     def _generate_sign(self, params: Dict[str, Any]) -> str:
         """

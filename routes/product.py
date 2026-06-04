@@ -8,6 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
 
 import config
+from db import get_pool
 from auth import get_current_user, get_current_admin, get_optional_user, TokenData
 from models.product import (
     ProductCreate,
@@ -29,21 +30,8 @@ router = APIRouter(prefix="/api/products", tags=["商品模块"])
 # ============ 数据库连接 ============
 
 async def get_db():
-    """获取数据库连接池"""
-    pool = await aiomysql.create_pool(
-        host=config.DB_HOST,
-        port=config.DB_PORT,
-        user=config.DB_USER,
-        password=config.DB_PASSWORD,
-        db=config.DB_NAME,
-        charset="utf8mb4",
-        autocommit=True,
-    )
-    try:
-        yield pool
-    finally:
-        pool.close()
-        await pool.wait_closed()
+    """获取全局连接池"""
+    return get_pool()
 
 
 async def get_product_service(pool=Depends(get_db)) -> ProductService:
@@ -180,64 +168,23 @@ async def create_product_review(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# ============ 智能搜索 ============
+# ============ 智能搜索（四棒搜索引擎） ============
 
-@router.get("/search/ai", response_model=SearchResult)
+@router.get("/search/ai")
 async def ai_search(
     keyword: str = Query(..., min_length=1, description="搜索关键词"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
-    service: ProductService = Depends(get_product_service),
     pool=Depends(get_db),
 ):
     """
-    智能搜索（结合向量检索 + 关键词匹配）
+    智能搜索（四棒搜索引擎）
 
-    返回搜索结果和 AI 总结
+    第1棒：意图解析（LLM纠错+语义理解）
+    第2棒：多路召回（文本+分类+品牌）
+    第3棒：精排打分（价格+销量+评分）
+    第4棒：重排调整（多样性+业务规则）
     """
-    # 获取向量数据库集合
-    vector_collection = None
-    try:
-        from utils import init_vector_db
-        import os
-        siliconflow_key = os.getenv("SILICONFLOW_API_KEY")
-        if siliconflow_key:
-            vector_collection = init_vector_db(api_key=siliconflow_key)
-    except Exception:
-        pass
-
-    # 执行搜索
-    products = await service.search_products_with_vector(
-        keyword=keyword,
-        vector_collection=vector_collection,
-        n_results=page_size,
-    )
-
-    # 生成 AI 总结（可选）
-    ai_summary = None
-    if products:
-        try:
-            from openai import OpenAI
-            import os
-            deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-            if deepseek_key:
-                client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
-                product_list = "\n".join([f"- {p.name}: ¥{p.price} ({p.platform})" for p in products[:5]])
-                response = client.chat.completions.create(
-                    model="deepseek-v4-flash",
-                    messages=[
-                        {"role": "system", "content": "你是商品搜索助手，用一句话总结搜索结果。"},
-                        {"role": "user", "content": f"用户搜索: {keyword}\n搜索结果:\n{product_list}\n请用一句话总结。"}
-                    ],
-                    max_tokens=100,
-                )
-                ai_summary = response.choices[0].message.content
-        except Exception:
-            pass
-
-    return SearchResult(
-        keyword=keyword,
-        total=len(products),
-        items=products,
-        ai_summary=ai_summary,
-    )
+    from services.search_engine import SearchEngine
+    engine = SearchEngine(pool)
+    return await engine.search(query=keyword, page=page, page_size=page_size)

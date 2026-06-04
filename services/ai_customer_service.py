@@ -3,10 +3,11 @@ AI 客服服务
 提供智能客服对话、订单查询、商品咨询等功能
 """
 import json
-from typing import List, Optional, Dict, Any
+import os
+from typing import List, Optional, Dict, Any, AsyncGenerator
 
 import aiomysql
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 import config
 
@@ -85,13 +86,11 @@ class AICustomerService:
 
         # 调用 AI 生成回复
         try:
-            import os
-            deepseek_key = os.getenv("DEEPSEEK_API_KEY")
-            if not deepseek_key:
+            if not config.DEEPSEEK_API_KEY:
                 return "AI 服务未配置，请联系管理员"
 
-            client = OpenAI(api_key=deepseek_key, base_url="https://api.deepseek.com")
-            response = client.chat.completions.create(
+            client = AsyncOpenAI(api_key=config.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+            response = await client.chat.completions.create(
                 model="deepseek-v4-flash",
                 messages=messages,
                 max_tokens=500,
@@ -100,7 +99,53 @@ class AICustomerService:
             return response.choices[0].message.content
 
         except Exception as e:
-            return f"抱歉，AI 服务暂时不可用，请稍后再试。错误：{str(e)}"
+            return "抱歉，AI 服务暂时不可用，请稍后再试。"
+
+    async def chat_stream(
+        self,
+        user_id: int,
+        message: str,
+        history: List[Dict[str, str]] = None
+    ) -> AsyncGenerator[str, None]:
+        """
+        AI 客服流式对话（yield 每个 token）
+        """
+        context = await self._get_user_context(user_id)
+        messages = [{"role": "system", "content": self.system_prompt}]
+        if context:
+            messages.append({
+                "role": "system",
+                "content": f"用户信息：{json.dumps(context, ensure_ascii=False)}"
+            })
+        if history:
+            messages.extend(history[-5:])
+        messages.append({"role": "user", "content": message})
+
+        tool_response = await self._check_and_call_tools(user_id, message)
+        if tool_response:
+            messages.append({
+                "role": "system",
+                "content": f"工具查询结果：{tool_response}"
+            })
+
+        if not config.DEEPSEEK_API_KEY:
+            yield "AI 服务未配置，请联系管理员"
+            return
+
+        client = AsyncOpenAI(api_key=config.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+        try:
+            stream = await client.chat.completions.create(
+                model="deepseek-v4-flash",
+                messages=messages,
+                max_tokens=500,
+                temperature=0.7,
+                stream=True,
+            )
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+        except Exception as e:
+            yield f"\n\nAI 服务出错：{str(e)}"
 
     async def _get_user_context(self, user_id: int) -> Optional[Dict[str, Any]]:
         """获取用户上下文信息"""
@@ -207,12 +252,13 @@ class AICustomerService:
             async with conn.cursor(aiomysql.DictCursor) as cur:
                 keyword = keywords[0] if keywords else ""
                 await cur.execute("""
-                    SELECT name, price, platform, stock
-                    FROM products
-                    WHERE name LIKE %s AND status = 'on_sale'
-                    ORDER BY sales DESC
-                    LIMIT 5
-                """, (f"%{keyword}%",))
+                    SELECT p.name, p.price, p.platform, p.stock
+                    FROM products p
+                    LEFT JOIN categories c ON p.category_id = c.id
+                    WHERE (p.name LIKE %s OR c.name LIKE %s) AND p.status = 'on_sale'
+                    ORDER BY p.sales DESC
+                    LIMIT 8
+                """, (f"%{keyword}%", f"%{keyword}%"))
                 products = await cur.fetchall()
 
                 if not products:
@@ -229,7 +275,13 @@ class AICustomerService:
         """从消息中提取商品关键词"""
         # 简单的关键词提取
         keywords = []
-        product_categories = ["手机", "耳机", "电脑", "平板", "音箱", "手表"]
+        product_categories = [
+            "手机", "耳机", "电脑", "平板", "音箱", "手表",
+            "美妆", "口红", "护肤", "零食", "坚果", "食品",
+            "服装", "T恤", "牛仔裤", "鞋", "运动", "箱包",
+            "相机", "镜头", "空调", "电饭煲", "家电", "家居",
+            "母婴", "奶粉", "纸尿裤", "图书", "书",
+        ]
 
         for category in product_categories:
             if category in message:

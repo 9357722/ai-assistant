@@ -1,13 +1,18 @@
 # test_chroma.py —— 使用极其免费且效果好的中文 Embedding 服务
 import chromadb
+import os
 from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 from openai import OpenAI # 完全兼容官方openai库
 
 class SiliconFlowEmbedding(EmbeddingFunction):
     def __init__(self):
-        # 填入刚才复制的硅基流动 API Key (通常 src 开头)
+        # 从环境变量读取 API Key
+        api_key = os.getenv("SILICONFLOW_API_KEY")
+        if not api_key:
+            raise ValueError("请设置环境变量 SILICONFLOW_API_KEY")
+
         self.client = OpenAI(
-            api_key="sk-pqgblebbhnjisdsywfoqhqszcdxcjojxfzmxaccorqqhnmee",
+            api_key=api_key,
             base_url="https://api.siliconflow.cn/v1"
         )
 

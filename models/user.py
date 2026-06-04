@@ -3,8 +3,9 @@
 """
 from datetime import datetime
 from typing import Optional, List
+import re
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # ============ 请求模型 ============
@@ -13,8 +14,26 @@ class UserCreate(BaseModel):
     """用户注册请求"""
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     email: EmailStr = Field(..., description="邮箱")
-    password: str = Field(..., min_length=6, max_length=100, description="密码")
+    password: str = Field(..., min_length=8, max_length=100, description="密码")
     phone: Optional[str] = Field(None, max_length=20, description="手机号")
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('密码至少8个字符')
+        if not re.search(r'[a-zA-Z]', v):
+            raise ValueError('密码必须包含字母')
+        if not re.search(r'\d', v):
+            raise ValueError('密码必须包含数字')
+        return v
+
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls, v):
+        if not re.match(r'^[a-zA-Z0-9_一-龥]+$', v):
+            raise ValueError('用户名只能包含字母、数字、下划线和中文')
+        return v
 
 
 class UserLogin(BaseModel):

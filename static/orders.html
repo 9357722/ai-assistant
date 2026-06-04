@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的订单 - AI 智能电商导购平台</title>
+    <title>我的订单 - 惠购商城</title>
     <style>
         * {
             margin: 0;
@@ -86,7 +86,7 @@
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+            background: linear-gradient(135deg, #0071e3, #00c6fb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-decoration: none;
@@ -545,7 +545,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <a href="/" class="logo">AI 智购</a>
+            <a href="/" class="logo">惠购商城</a>
             <nav class="nav-links">
                 <a href="/">首页</a>
                 <a href="/product.html">商品</a>
@@ -593,8 +593,8 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <script src="/static/common.js"></script>
     <script>
-        const API_BASE = '';
         let currentStatus = '';
         let currentPage = 1;
 
@@ -663,7 +663,7 @@
                 <div class="order-item">
                     <div class="item-image">${item.product_image ? `<img src="${item.product_image}" alt="${item.product_name}">` : '📦'}</div>
                     <div class="item-info">
-                        <div class="item-name">${item.product_name}</div>
+                        <div class="item-name">${escapeHTML(item.product_name)}</div>
                         <div class="item-spec">x${item.quantity}</div>
                     </div>
                     <div class="item-price">
@@ -736,7 +736,7 @@
                 <div class="order-item">
                     <div class="item-image">${item.product_image ? `<img src="${item.product_image}" alt="${item.product_name}">` : '📦'}</div>
                     <div class="item-info">
-                        <div class="item-name">${item.product_name}</div>
+                        <div class="item-name">${escapeHTML(item.product_name)}</div>
                         <div class="item-spec">单价: ¥${item.price} x${item.quantity}</div>
                     </div>
                     <div class="item-price">
@@ -769,7 +769,7 @@
                     ${order.remark ? `
                     <div class="detail-row">
                         <span class="label">备注</span>
-                        <span class="value">${order.remark}</span>
+                        <span class="value">${escapeHTML(order.remark)}</span>
                     </div>
                     ` : ''}
                 </div>
@@ -778,15 +778,15 @@
                     <h4 class="detail-title">收货信息</h4>
                     <div class="detail-row">
                         <span class="label">收货人</span>
-                        <span class="value">${address.name || '-'}</span>
+                        <span class="value">${escapeHTML(address.name) || '-'}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">联系电话</span>
-                        <span class="value">${address.phone || '-'}</span>
+                        <span class="value">${escapeHTML(address.phone) || '-'}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">收货地址</span>
-                        <span class="value">${address.province || ''}${address.city || ''}${address.district || ''}${address.detail || '-'}</span>
+                        <span class="value">${escapeHTML(address.province || '')}${escapeHTML(address.city || '')}${escapeHTML(address.district || '')}${escapeHTML(address.detail || '-')}</span>
                     </div>
                 </div>
 

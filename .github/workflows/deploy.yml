@@ -1,13 +1,26 @@
-services:
-  api:
-    image: ai-assistant:slim
-    container_name: ai-assistant
-    restart: always
-    ports:
-      - "8000:8000"
-    environment:
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
-      OPENAI_API_KEY: ${DEEPSEEK_API_KEY}
-      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Deploy to ECS via SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.ECS_HOST }}
+        username: ${{ secrets.ECS_USERNAME }}
+        key: ${{ secrets.ECS_PRIVATE_KEY }}
+        script: |
+          cd /root/ai-assistant
+          git pull origin main
+          docker compose down
+          docker compose up -d --build

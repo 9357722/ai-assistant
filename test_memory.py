@@ -1,11 +1,18 @@
 # test_memory.py —— 测试对话记忆功能
 
 import openai
+import os
 from utils import ChatSession
 
-# 初始化 DeepSeek 客户端（替换成你自己的 API Key）
+# 从环境变量读取 API Key
+api_key = os.getenv("DEEPSEEK_API_KEY")
+if not api_key:
+    print("错误：请设置环境变量 DEEPSEEK_API_KEY")
+    exit(1)
+
+# 初始化 DeepSeek 客户端
 client = openai.OpenAI(
-    api_key="sk-ef1bcf1c1c0b4deebbaf4a83cbcc0dd0",
+    api_key=api_key,
     base_url="https://api.deepseek.com"
 )
 

@@ -24,3 +24,22 @@ lora_output/
 
 # 日志
 *.log
+
+# Claude Code 配置
+.claude/
+
+# 截图和临时文件
+*.png
+*.jpg
+*.jpeg
+
+# 测试文件（可选，保留测试脚本但排除敏感数据）
+# test_*.py
+
+# 其他部署目录
+lobe-chat-deploy/
+ai-shopping-assistant/
+
+# 训练数据
+training_data.json
+image_mapping.json

@@ -3,12 +3,15 @@
 提供用户注册、登录、个人信息管理、地址管理等接口
 """
 import aiomysql
+import time
+from collections import defaultdict
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 
 import config
+from db import get_pool
 from auth import (
     get_password_hash,
     verify_password,
@@ -35,21 +38,8 @@ router = APIRouter(prefix="/api/user", tags=["用户模块"])
 # ============ 数据库连接 ============
 
 async def get_db():
-    """获取数据库连接"""
-    pool = await aiomysql.create_pool(
-        host=config.DB_HOST,
-        port=config.DB_PORT,
-        user=config.DB_USER,
-        password=config.DB_PASSWORD,
-        db=config.DB_NAME,
-        charset="utf8mb4",
-        autocommit=True,
-    )
-    try:
-        yield pool
-    finally:
-        pool.close()
-        await pool.wait_closed()
+    """获取全局连接池"""
+    return get_pool()
 
 
 # ============ 用户注册 ============
@@ -99,10 +89,25 @@ async def register(user_data: UserCreate, db=Depends(get_db)):
             return UserResponse(**user)
 
 
+# ============ 登录限流 ============
+_login_attempts = defaultdict(list)  # ip -> [timestamp, ...]
+_LOGIN_MAX_ATTEMPTS = 5
+_LOGIN_WINDOW = 300  # 5 分钟
+
+def _check_login_rate_limit(ip: str):
+    """检查登录频率，超过限制抛出 429"""
+    now = time.time()
+    _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < _LOGIN_WINDOW]
+    if len(_login_attempts[ip]) >= _LOGIN_MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"登录尝试过于频繁，请 {_LOGIN_WINDOW // 60} 分钟后再试"
+        )
+
 # ============ 用户登录 ============
 
 @router.post("/login", response_model=UserLoginResponse)
-async def login(login_data: UserLogin, db=Depends(get_db)):
+async def login(login_data: UserLogin, request: Request, db=Depends(get_db)):
     """
     用户登录
 
@@ -110,16 +115,20 @@ async def login(login_data: UserLogin, db=Depends(get_db)):
     - 验证密码
     - 返回 JWT Token
     """
+    client_ip = request.client.host if request.client else "unknown"
+    _check_login_rate_limit(client_ip)
+
     async with db.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
-            # 查找用户（支持用户名或邮箱）
+            # 查找用户（支持用户名或邮箱）— 明确指定字段，避免 SELECT * 泄露 hash
             await cur.execute(
-                "SELECT * FROM users WHERE username = %s OR email = %s",
+                "SELECT id, username, email, hashed_password, phone, avatar, role, is_active, created_at, updated_at FROM users WHERE username = %s OR email = %s",
                 (login_data.username, login_data.username)
             )
             user = await cur.fetchone()
 
             if not user or not verify_password(login_data.password, user["hashed_password"]):
+                _login_attempts[client_ip].append(time.time())
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="用户名或密码错误",

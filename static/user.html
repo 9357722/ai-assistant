@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人中心 - AI 智能电商导购平台</title>
+    <title>个人中心 - 惠购商城</title>
     <style>
         * {
             margin: 0;
@@ -86,7 +86,7 @@
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
+            background: linear-gradient(135deg, #0071e3, #00c6fb);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-decoration: none;
@@ -257,7 +257,7 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), #a855f7);
+            background: linear-gradient(135deg, var(--primary), #00c6fb);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -573,7 +573,7 @@
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <a href="/" class="logo">AI 智购</a>
+            <a href="/" class="logo">惠购商城</a>
             <nav class="nav-links">
                 <a href="/">首页</a>
                 <a href="/product.html">商品</a>
@@ -589,7 +589,7 @@
         <!-- Auth Section (Login/Register) -->
         <div class="auth-container" id="authSection">
             <div class="auth-card">
-                <h2 class="auth-title">欢迎来到 AI 智购</h2>
+                <h2 class="auth-title">欢迎来到 惠购商城</h2>
                 <div class="auth-tabs">
                     <div class="auth-tab active" data-tab="login">登录</div>
                     <div class="auth-tab" data-tab="register">注册</div>
@@ -810,8 +810,8 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <script src="/static/common.js"></script>
     <script>
-        const API_BASE = '';
         let currentUser = null;
         let editingAddressId = null;
 
@@ -870,7 +870,7 @@
                 const data = await res.json();
                 if (res.ok) {
                     localStorage.setItem('token', data.access_token);
-                    localStorage.setItem('username', data.username || username);
+                    localStorage.setItem('username', data.user ? data.user.username : username);
                     showToast('登录成功');
                     setTimeout(() => checkAuth(), 500);
                 } else {
@@ -1068,7 +1068,7 @@
 
                 if (res.ok) {
                     const data = await res.json();
-                    renderAddresses(data.items || []);
+                    renderAddresses(Array.isArray(data) ? data : []);
                 }
             } catch (err) {
                 showToast('加载地址失败', 'error');
@@ -1087,9 +1087,9 @@
             container.innerHTML = addresses.map(addr => `
                 <div class="address-card">
                     <div class="address-info">
-                        <div class="name">${addr.name} ${addr.is_default ? '<span style="color: var(--primary); font-size: 0.8rem;">默认</span>' : ''}</div>
-                        <div class="detail">${addr.province || ''}${addr.city || ''}${addr.district || ''}${addr.detail || ''}</div>
-                        <div class="phone">${addr.phone}</div>
+                        <div class="name">${escapeHTML(addr.name)} ${addr.is_default ? '<span style="color: var(--primary); font-size: 0.8rem;">默认</span>' : ''}</div>
+                        <div class="detail">${escapeHTML(addr.province || '')}${escapeHTML(addr.city || '')}${escapeHTML(addr.district || '')}${escapeHTML(addr.detail || '')}</div>
+                        <div class="phone">${escapeHTML(addr.phone)}</div>
                     </div>
                     <div class="address-actions">
                         <button class="icon-btn" onclick="editAddress(${addr.id})">✏️</button>
@@ -1123,7 +1123,7 @@
 
                 if (res.ok) {
                     const data = await res.json();
-                    const addr = (data.items || []).find(a => a.id === id);
+                    const addr = (Array.isArray(data) ? data : []).find(a => a.id === id);
                     if (addr) {
                         editingAddressId = id;
                         document.getElementById('addressFormTitle').textContent = '编辑收货地址';

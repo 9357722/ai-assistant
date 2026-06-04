@@ -36,7 +36,7 @@ class CartItemResponse(BaseModel):
     quantity: int
     selected: bool
     subtotal: float
-    created_at: datetime
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
 

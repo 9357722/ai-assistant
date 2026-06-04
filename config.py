@@ -14,8 +14,10 @@ DB_NAME = os.getenv("DB_NAME", "product_db")
 
 # ============ JWT 配置 ============
 SECRET_KEY = os.getenv("SECRET_KEY", "")
+if not SECRET_KEY:
+    print("WARNING: SECRET_KEY is not set! JWT tokens will be insecure. Set SECRET_KEY in .env")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("TOKEN_EXPIRE_MINUTES", "720"))  # 12小时
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("TOKEN_EXPIRE_MINUTES", "120"))  # 2小时
 
 # ============ API Keys ============
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
@@ -38,7 +40,8 @@ MAX_PAGE_SIZE = 100
 CORS_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:8080",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8080",
     "http://120.55.95.8:8000",
     "http://120.55.95.8:8080",
-    "*",
 ]

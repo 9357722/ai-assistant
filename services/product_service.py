@@ -72,8 +72,9 @@ class ProductService:
 
                 # 排序
                 valid_sort_fields = ["created_at", "price", "sales", "name"]
+                valid_sort_orders = {"asc": "ASC", "desc": "DESC"}
                 sort_by = query.sort_by if query.sort_by in valid_sort_fields else "created_at"
-                sort_order = "ASC" if query.sort_order.lower() == "asc" else "DESC"
+                sort_order = valid_sort_orders.get(query.sort_order.lower(), "DESC")
 
                 # 获取总数
                 count_sql = f"SELECT COUNT(*) as total FROM products p WHERE {where_clause}"

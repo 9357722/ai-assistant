@@ -6,9 +6,11 @@ import aiomysql
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 import config
+from db import get_pool
 from auth import get_current_user, get_optional_user, TokenData
 from services.recommendation import RecommendationEngine
 from services.ai_customer_service import AICustomerService
@@ -19,21 +21,8 @@ router = APIRouter(prefix="/api/ai", tags=["AI 模块"])
 # ============ 数据库连接 ============
 
 async def get_db():
-    """获取数据库连接池"""
-    pool = await aiomysql.create_pool(
-        host=config.DB_HOST,
-        port=config.DB_PORT,
-        user=config.DB_USER,
-        password=config.DB_PASSWORD,
-        db=config.DB_NAME,
-        charset="utf8mb4",
-        autocommit=True,
-    )
-    try:
-        yield pool
-    finally:
-        pool.close()
-        await pool.wait_closed()
+    """获取全局连接池"""
+    return get_pool()
 
 
 # ============ 请求模型 ============
@@ -162,6 +151,28 @@ async def ai_customer_service_chat(
         "message": request.message,
         "reply": reply,
     }
+
+
+# ============ AI 客服流式对话 ============
+
+@router.post("/chat/stream")
+async def ai_customer_service_chat_stream(
+    request: ChatRequest,
+    current_user: TokenData = Depends(get_current_user),
+    pool=Depends(get_db),
+):
+    """AI 客服流式对话（SSE）"""
+    service = AICustomerService(pool)
+
+    async def generate():
+        async for token in service.chat_stream(
+            user_id=current_user.user_id,
+            message=request.message,
+            history=request.history,
+        ):
+            yield token
+
+    return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
 
 
 # ============ 快捷回复 ============

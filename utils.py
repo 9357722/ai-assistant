@@ -1,4 +1,5 @@
 from langchain_openai import ChatOpenAI
+import config
 
 # utils.py —— 工具函数模块
 
@@ -96,7 +97,7 @@ class ChatSession:
         if model is None:
             self.model = ChatOpenAI(
                 model="deepseek-v4-flash",
-                api_key="sk-ef1bcf1c1c0b4deebbf4a83cbcc",
+                api_key=config.DEEPSEEK_API_KEY,
                 base_url="https://api.deepseek.com"
             )
         else:
@@ -134,11 +135,10 @@ from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 from openai import OpenAI
 
 class SiliconFlowEmbedding(EmbeddingFunction):
-    """硅基流动 Embedding 函数（强制硬编码 Key 版本）"""
+    """硅基流动 Embedding 函数"""
     def __init__(self, api_key=None, base_url="https://api.siliconflow.cn/v1"):
-        # ！核心修复！：直接强制绑定硅基流动Key，抵御外部环境或传参干扰
         self.client = OpenAI(
-            api_key="sk-pqgblebbhnjisdsywfoqhqszcdxcjojxfzmxaccorqqhnmee",
+            api_key=api_key or config.SILICONFLOW_API_KEY,
             base_url=base_url
         )
 

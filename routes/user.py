@@ -90,7 +90,7 @@ async def register(user_data: UserCreate, db=Depends(get_db)):
             return UserResponse(**user)
 
 
-# ============ 登录限流（Redis 滑动窗口） ============
+# ============ 登录限流（Redis 滑动窗口，Redis 不可用时降级） ============
 _LOGIN_MAX_ATTEMPTS = 10
 _LOGIN_WINDOW = 300  # 5 分钟
 
@@ -99,6 +99,8 @@ def _check_login_rate_limit(ip: str):
     try:
         from services.cache import get_redis
         r = get_redis()
+        if r is None:
+            return  # Redis 不可用时跳过限流
         key = f"login_limit:{ip}"
         now = time.time()
         pipe = r.pipeline()

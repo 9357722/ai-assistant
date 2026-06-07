@@ -189,3 +189,16 @@ async def get_quick_replies(
         "user_id": current_user.user_id,
         "quick_replies": replies,
     }
+
+
+# ============ 清除对话历史 ============
+
+@router.delete("/chat/history")
+async def clear_chat_history(
+    current_user: TokenData = Depends(get_current_user),
+    pool=Depends(get_db),
+):
+    """清除当前用户的对话历史"""
+    service = AICustomerService(pool)
+    service.clear_history(current_user.user_id)
+    return {"message": "对话历史已清除"}

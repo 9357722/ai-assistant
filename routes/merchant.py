@@ -337,6 +337,22 @@ async def agent_chat(data: AgentChat, user=Depends(get_current_user), db=Depends
     return result
 
 
+@router.delete("/agent/chat/history")
+async def clear_agent_history(user=Depends(get_current_user), db=Depends(get_db)):
+    """清除商家智能助手对话历史"""
+    from services.merchant_service import MerchantService
+    from services.merchant_agent import MerchantAgent
+
+    service = MerchantService(db)
+    merchant = await service.get_merchant_by_user_id(user.user_id)
+    if not merchant:
+        raise HTTPException(status_code=403, detail="您不是商家")
+
+    agent = MerchantAgent(db)
+    agent.clear_history(merchant['id'])
+    return {"message": "对话历史已清除"}
+
+
 @router.post("/agent/generate-product")
 async def agent_generate_product(data: dict, user=Depends(get_current_user), db=Depends(get_db)):
     """AI生成商品信息"""

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 import config
 from db import get_pool
 from auth import get_current_user, TokenData
+from services.websocket_manager import ws_manager
 from models.order import (
     OrderCreate,
     OrderItemResponse,
@@ -380,6 +381,14 @@ async def pay_order(
             )
             await conn.commit()
 
+            # 推送实时通知
+            await ws_manager.notify_order_status(
+                user_id=current_user.user_id,
+                order_no=order["order_no"],
+                status="paid",
+                message=f"订单 {order['order_no']} 支付成功，金额 ¥{order['total_amount']}",
+            )
+
             return {
                 "message": "支付成功",
                 "order_no": order["order_no"],
@@ -432,6 +441,14 @@ async def cancel_order(
                 )
                 await conn.commit()
 
+                # 推送实时通知
+                await ws_manager.notify_order_status(
+                    user_id=current_user.user_id,
+                    order_no=order["order_no"],
+                    status="cancelled",
+                    message=f"订单 {order['order_no']} 已取消",
+                )
+
                 return {"message": "订单已取消"}
             except HTTPException:
                 await conn.rollback()
@@ -470,5 +487,13 @@ async def complete_order(
                 (order_id,)
             )
             await conn.commit()
+
+            # 推送实时通知
+            await ws_manager.notify_order_status(
+                user_id=current_user.user_id,
+                order_no=order["order_no"],
+                status="completed",
+                message=f"订单 {order['order_no']} 已确认收货",
+            )
 
             return {"message": "已确认收货"}

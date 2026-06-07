@@ -23,6 +23,7 @@ from models.product import (
     SearchResult,
 )
 from services.product_service import ProductService
+from services.cache import get_cache, set_cache, delete_cache
 
 router = APIRouter(prefix="/api/products", tags=["商品模块"])
 
@@ -60,6 +61,12 @@ async def list_products(
     支持按关键词、分类、价格区间、平台筛选
     支持按创建时间、价格、销量、名称排序
     """
+    # 构建缓存 key（包含所有查询参数）
+    cache_key = f"products:list:{keyword}:{category_id}:{min_price}:{max_price}:{platform}:{sort_by}:{sort_order}:{page}:{page_size}"
+    cached = get_cache(cache_key)
+    if cached:
+        return cached
+
     query = ProductQuery(
         keyword=keyword,
         category_id=category_id,
@@ -71,7 +78,79 @@ async def list_products(
         page=page,
         page_size=page_size,
     )
-    return await service.get_products(query)
+    result = await service.get_products(query)
+    # 写入缓存，60秒过期（列表数据变化较快）
+    set_cache(cache_key, result.model_dump(), expire=60)
+    return result
+
+
+# ============ 商品对比 ============
+
+@router.get("/compare")
+async def compare_products(
+    ids: str = Query(..., description="商品ID列表，逗号分隔，最多4个"),
+    pool=Depends(get_db),
+):
+    """
+    商品对比接口
+
+    支持 2-4 个商品同时对比，返回结构化对比数据
+    包含：价格、销量、平台、分类等维度
+    """
+    try:
+        product_ids = [int(x.strip()) for x in ids.split(",") if x.strip()]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="商品ID格式错误")
+
+    if len(product_ids) < 2:
+        raise HTTPException(status_code=400, detail="至少需要2个商品进行对比")
+    if len(product_ids) > 4:
+        raise HTTPException(status_code=400, detail="最多支持4个商品对比")
+
+    cache_key = f"products:compare:{','.join(map(str, sorted(product_ids)))}"
+    cached = get_cache(cache_key)
+    if cached:
+        return cached
+
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            placeholders = ",".join(["%s"] * len(product_ids))
+            await cur.execute(
+                f"""SELECT p.*, c.name as category_name
+                    FROM products p
+                    LEFT JOIN categories c ON p.category_id = c.id
+                    WHERE p.id IN ({placeholders}) AND p.status = 'on_sale'""",
+                product_ids
+            )
+            products = list(await cur.fetchall())
+
+    if len(products) < 2:
+        raise HTTPException(status_code=400, detail="对比商品不足，请检查商品是否存在或已下架")
+
+    comparison = {
+        "products": [
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "price": float(p["price"]),
+                "platform": p["platform"],
+                "category": p.get("category_name", ""),
+                "sales": p.get("sales", 0),
+                "stock": p.get("stock", 0),
+                "main_image": p.get("main_image", ""),
+                "description": p.get("description", ""),
+            }
+            for p in products
+        ],
+        "dimensions": {
+            "cheapest": min(products, key=lambda x: float(x["price"]))["id"],
+            "best_selling": max(products, key=lambda x: x.get("sales", 0))["id"],
+            "most_stock": max(products, key=lambda x: x.get("stock", 0))["id"],
+        },
+    }
+
+    set_cache(cache_key, comparison, expire=120)
+    return comparison
 
 
 # ============ 商品详情 ============
@@ -82,9 +161,15 @@ async def get_product(
     service: ProductService = Depends(get_product_service),
 ):
     """获取商品详情"""
+    cache_key = f"products:detail:{product_id}"
+    cached = get_cache(cache_key)
+    if cached:
+        return cached
+
     product = await service.get_product_by_id(product_id)
     if not product:
         raise HTTPException(status_code=404, detail="商品不存在")
+    set_cache(cache_key, product.model_dump(), expire=300)
     return product
 
 
@@ -97,7 +182,9 @@ async def create_product(
     service: ProductService = Depends(get_product_service),
 ):
     """创建商品（仅管理员）"""
-    return await service.create_product(product_data)
+    product = await service.create_product(product_data)
+    delete_cache("products:list:*")
+    return product
 
 
 # ============ 更新商品（管理员） ============
@@ -113,6 +200,8 @@ async def update_product(
     product = await service.update_product(product_id, product_data)
     if not product:
         raise HTTPException(status_code=404, detail="商品不存在")
+    delete_cache("products:list:*")
+    delete_cache(f"products:detail:{product_id}")
     return product
 
 
@@ -126,6 +215,9 @@ async def delete_product(
 ):
     """删除商品（软删除，仅管理员）"""
     success = await service.delete_product(product_id)
+    if success:
+        delete_cache("products:list:*")
+        delete_cache(f"products:detail:{product_id}")
     if not success:
         raise HTTPException(status_code=404, detail="商品不存在")
     return {"message": "商品已下架"}
@@ -166,6 +258,60 @@ async def create_product_review(
         return await service.create_review(product_id, current_user.user_id, review_data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# ============ 搜索自动补全 ============
+
+@router.get("/search/suggest")
+async def search_suggest(
+    keyword: str = Query(..., min_length=1, description="搜索关键词"),
+    limit: int = Query(8, ge=1, le=20, description="返回数量"),
+    pool=Depends(get_db),
+):
+    """
+    搜索自动补全（Typeahead）
+
+    基于 Redis 前缀树缓存 + 数据库模糊查询
+    支持商品名、品牌名、分类名补全
+    """
+    from services.cache import get_cache, set_cache
+
+    cache_key = f"search:suggest:{keyword}:{limit}"
+    cached = get_cache(cache_key)
+    if cached:
+        return cached
+
+    async with pool.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            # 商品名补全
+            await cur.execute(
+                """SELECT DISTINCT name as text, 'product' as type
+                   FROM products WHERE name LIKE %s AND status = 'on_sale'
+                   LIMIT %s""",
+                (f"%{keyword}%", limit)
+            )
+            products = list(await cur.fetchall())
+
+            # 分类名补全
+            await cur.execute(
+                """SELECT DISTINCT name as text, 'category' as type
+                   FROM categories WHERE name LIKE %s
+                   LIMIT %s""",
+                (f"%{keyword}%", limit)
+            )
+            categories = list(await cur.fetchall())
+
+            # 合并去重
+            suggestions = []
+            seen = set()
+            for item in products + categories:
+                if item["text"] not in seen:
+                    seen.add(item["text"])
+                    suggestions.append(item)
+
+            result = {"keyword": keyword, "suggestions": suggestions[:limit]}
+            set_cache(cache_key, result, expire=300)
+            return result
 
 
 # ============ 智能搜索（四棒搜索引擎） ============

@@ -79,6 +79,7 @@ async def register(user_data: UserCreate, db=Depends(get_db)):
                 (user_data.username, user_data.email, hashed_password, user_data.phone)
             )
             user_id = cur.lastrowid
+            await conn.commit()
 
             # 返回用户信息
             await cur.execute(
@@ -89,20 +90,32 @@ async def register(user_data: UserCreate, db=Depends(get_db)):
             return UserResponse(**user)
 
 
-# ============ 登录限流 ============
-_login_attempts = defaultdict(list)  # ip -> [timestamp, ...]
-_LOGIN_MAX_ATTEMPTS = 5
+# ============ 登录限流（Redis 滑动窗口） ============
+_LOGIN_MAX_ATTEMPTS = 10
 _LOGIN_WINDOW = 300  # 5 分钟
 
 def _check_login_rate_limit(ip: str):
     """检查登录频率，超过限制抛出 429"""
-    now = time.time()
-    _login_attempts[ip] = [t for t in _login_attempts[ip] if now - t < _LOGIN_WINDOW]
-    if len(_login_attempts[ip]) >= _LOGIN_MAX_ATTEMPTS:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"登录尝试过于频繁，请 {_LOGIN_WINDOW // 60} 分钟后再试"
-        )
+    try:
+        from services.cache import get_redis
+        r = get_redis()
+        key = f"login_limit:{ip}"
+        now = time.time()
+        pipe = r.pipeline()
+        pipe.zremrangebyscore(key, 0, now - _LOGIN_WINDOW)
+        pipe.zadd(key, {str(now): now})
+        pipe.zcard(key)
+        pipe.expire(key, _LOGIN_WINDOW)
+        _, _, count, _ = pipe.execute()
+        if count > _LOGIN_MAX_ATTEMPTS:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"登录尝试过于频繁，请稍后再试"
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # Redis 不可用时不限流
 
 # ============ 用户登录 ============
 
@@ -115,19 +128,39 @@ async def login(login_data: UserLogin, request: Request, db=Depends(get_db)):
     - 验证密码
     - 返回 JWT Token
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"LOGIN ATTEMPT: username={login_data.username}")
+
     client_ip = request.client.host if request.client else "unknown"
+    logger.info(f"Client IP: {client_ip}")
     _check_login_rate_limit(client_ip)
 
     async with db.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             # 查找用户（支持用户名或邮箱）— 明确指定字段，避免 SELECT * 泄露 hash
+            logger.info(f"Executing query for username: {login_data.username}")
             await cur.execute(
                 "SELECT id, username, email, hashed_password, phone, avatar, role, is_active, created_at, updated_at FROM users WHERE username = %s OR email = %s",
                 (login_data.username, login_data.username)
             )
             user = await cur.fetchone()
+            logger.info(f"User found: {user is not None}")
 
-            if not user or not verify_password(login_data.password, user["hashed_password"]):
+            if not user:
+                logger.info("User not found")
+                _login_attempts[client_ip].append(time.time())
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="用户名或密码错误",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            logger.info("Verifying password")
+            password_valid = verify_password(login_data.password, user["hashed_password"])
+            logger.info(f"Password valid: {password_valid}")
+
+            if not password_valid:
                 _login_attempts[client_ip].append(time.time())
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -224,6 +257,7 @@ async def update_profile(
             update_values.append(current_user.user_id)
             sql = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
             await cur.execute(sql, update_values)
+            await conn.commit()
 
             # 返回更新后的用户信息
             await cur.execute(
@@ -261,6 +295,7 @@ async def change_password(
                 "UPDATE users SET hashed_password = %s WHERE id = %s",
                 (new_hashed, current_user.user_id)
             )
+            await conn.commit()
 
             return {"message": "密码修改成功"}
 
@@ -315,6 +350,7 @@ async def create_address(
                 )
             )
             address_id = cur.lastrowid
+            await conn.commit()
 
             # 返回创建的地址
             await cur.execute("SELECT * FROM user_addresses WHERE id = %s", (address_id,))
@@ -364,6 +400,7 @@ async def update_address(
                     current_user.user_id,
                 )
             )
+            await conn.commit()
 
             # 返回更新后的地址
             await cur.execute("SELECT * FROM user_addresses WHERE id = %s", (address_id,))
@@ -386,6 +423,7 @@ async def delete_address(
             )
             if cur.rowcount == 0:
                 raise HTTPException(status_code=404, detail="地址不存在")
+            await conn.commit()
             return {"message": "地址删除成功"}
 
 

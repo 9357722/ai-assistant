@@ -4,551 +4,278 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>购物车 - 惠购商城</title>
+    <link rel="stylesheet" href="/static/design-system.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #0071e3;
-            --primary-dark: #0077ed;
-            --bg-dark: #f5f5f7;
-            --bg-card: #ffffff;
-            --bg-input: #f0f0f2;
-            --text-primary: #1d1d1f;
-            --text-secondary: #6e6e73;
-            --border-color: rgba(0,0,0,0.08);
-            --success: #34c759;
-            --warning: #ff9500;
-            --danger: #ff3b30;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            min-height: 100vh;
-        }
-
-        /* Animated Background */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .bg-animation::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-                        radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
-                        radial-gradient(ellipse at 40% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
-            animation: bgFloat 20s ease-in-out infinite;
-        }
-
-        @keyframes bgFloat {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(2%, -2%) rotate(1deg); }
-            50% { transform: translate(-1%, 1%) rotate(-1deg); }
-            75% { transform: translate(1%, 2%) rotate(0.5deg); }
-        }
-
-        /* Header */
-        .header {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, #0071e3, #00c6fb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-            margin-left: auto;
-        }
-
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--text-primary);
-        }
-
-        .nav-links a.active {
-            color: var(--primary);
-        }
-
-        /* Main Content */
+        /* ============ 购物车专属样式 ============ */
         .main-content {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: var(--space-6);
         }
-
         .page-title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
+            font-size: var(--text-2xl);
+            font-weight: var(--weight-bold);
+            margin-bottom: var(--space-6);
+            letter-spacing: -0.3px;
         }
-
-        .cart-layout {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .cart-items {
-            flex: 1;
-        }
-
-        .cart-sidebar {
-            width: 350px;
-            flex-shrink: 0;
-        }
-
-        /* Cart Item */
-        .cart-item {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s;
-        }
-
-        .cart-item:hover {
-            border-color: var(--primary);
-        }
-
-        .item-checkbox {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--primary);
-            cursor: pointer;
-        }
-
-        .item-image {
-            width: 100px;
-            height: 100px;
-            background: var(--bg-input);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        .item-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .item-info {
-            flex: 1;
-        }
-
-        .item-name {
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        .item-platform {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .item-price {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: var(--danger);
-        }
-
-        .item-actions {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 1rem;
-        }
-
-        .quantity-control {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .quantity-btn {
-            width: 32px;
-            height: 32px;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-        }
-
-        .quantity-btn:hover:not(:disabled) {
-            border-color: var(--primary);
-            background: var(--primary);
-        }
-
-        .quantity-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .quantity-input {
-            width: 50px;
-            text-align: center;
-            padding: 0.4rem;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 1rem;
-        }
-
-        .item-total {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.3s;
-        }
-
-        .delete-btn:hover {
-            color: var(--danger);
-        }
-
-        /* Cart Summary */
-        .cart-summary {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-color);
-            position: sticky;
-            top: 100px;
-        }
-
-        .summary-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-        }
-
-        .summary-row.total {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .summary-row .amount {
-            color: var(--danger);
-            font-weight: 600;
-        }
-
-        .checkout-btn {
-            width: 100%;
-            padding: 1rem;
-            background: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 1.5rem;
-        }
-
-        .checkout-btn:hover {
-            background: #dc2626;
-        }
-
-        .checkout-btn:disabled {
-            background: #666;
-            cursor: not-allowed;
-        }
+        .cart-layout { display: flex; gap: var(--space-6); }
+        .cart-items { flex: 1; }
+        .cart-sidebar { width: 350px; flex-shrink: 0; }
 
         .select-all {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            padding: 1rem;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
         }
-
         .select-all label {
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: var(--space-2);
+            font-size: var(--text-sm);
         }
+        .select-all input { accent-color: var(--color-accent); }
 
-        /* Empty Cart */
+        .cart-item {
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-md);
+            padding: var(--space-5);
+            margin-bottom: var(--space-3);
+            display: flex;
+            align-items: center;
+            gap: var(--space-5);
+            border: 1px solid var(--color-border);
+            transition: all var(--duration-normal);
+        }
+        .cart-item:hover { border-color: var(--color-accent); }
+        .item-checkbox { width: 20px; height: 20px; accent-color: var(--color-accent); cursor: pointer; }
+        .item-image {
+            width: 100px;
+            height: 100px;
+            background: var(--color-bg-sunken);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .item-image img { width: 100%; height: 100%; object-fit: cover; }
+        .item-info { flex: 1; }
+        .item-name { font-size: var(--text-md); font-weight: var(--weight-medium); margin-bottom: var(--space-2); }
+        .item-platform { color: var(--color-text-secondary); font-size: var(--text-xs); margin-bottom: var(--space-2); }
+        .item-price { font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--color-danger); }
+        .item-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: var(--space-3);
+        }
+        .quantity-control { display: flex; align-items: center; gap: var(--space-2); }
+        .quantity-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--color-bg-sunken);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-md);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--duration-fast);
+        }
+        .quantity-btn:hover:not(:disabled) {
+            border-color: var(--color-accent);
+            background: var(--color-accent);
+            color: #fff;
+            transform: scale(1.1);
+        }
+        .quantity-btn:active:not(:disabled) { transform: scale(0.95); }
+        .quantity-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .quantity-input {
+            width: 56px;
+            text-align: center;
+            padding: var(--space-2);
+            background: var(--color-bg-sunken);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-weight: var(--weight-semibold);
+            font-size: var(--text-sm);
+        }
+        .quantity-input:focus { outline: none; border-color: var(--color-accent); }
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-sm);
+            transition: all var(--duration-fast);
+            font-size: var(--text-md);
+        }
+        .delete-btn:hover { color: var(--color-danger); background: rgba(255, 59, 48, 0.1); }
+        .item-total { font-size: var(--text-md); font-weight: var(--weight-semibold); }
+
+        .cart-summary {
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-md);
+            padding: var(--space-5);
+            border: 1px solid var(--color-border);
+            position: sticky;
+            top: 100px;
+        }
+        .summary-title {
+            font-size: var(--text-lg);
+            font-weight: var(--weight-semibold);
+            margin-bottom: var(--space-5);
+            padding-bottom: var(--space-4);
+            border-bottom: 1px solid var(--color-divider);
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-3);
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+        }
+        .summary-row.total {
+            font-size: var(--text-lg);
+            font-weight: var(--weight-semibold);
+            color: var(--color-text);
+            margin-top: var(--space-4);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--color-divider);
+        }
+        .summary-row .amount { color: var(--color-danger); font-weight: var(--weight-bold); }
+        .checkout-btn {
+            width: 100%;
+            padding: var(--space-3);
+            background: var(--color-danger);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-md);
+            font-weight: var(--weight-semibold);
+            cursor: pointer;
+            transition: all var(--duration-normal);
+            margin-top: var(--space-5);
+        }
+        .checkout-btn:hover { background: #dc2626; transform: translateY(-1px); }
+        .checkout-btn:disabled { background: #999; cursor: not-allowed; transform: none; }
+
         .empty-cart {
             text-align: center;
-            padding: 4rem 2rem;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
+            padding: var(--space-16) var(--space-6);
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
         }
+        .empty-icon { font-size: 64px; margin-bottom: var(--space-4); }
+        .empty-text { color: var(--color-text-secondary); margin-bottom: var(--space-5); }
 
-        .empty-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-
-        .empty-text {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-        }
-
-        .shop-btn {
-            display: inline-block;
-            padding: 0.75rem 2rem;
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: background 0.3s;
-        }
-
-        .shop-btn:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Address Modal */
+        /* 地址弹窗 */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
+            inset: 0;
+            background: var(--color-bg-overlay);
             z-index: 200;
         }
-
         .modal-content {
             max-width: 600px;
             margin: 5vh auto;
-            background: var(--bg-card);
-            border-radius: 16px;
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-xl);
             overflow: hidden;
         }
-
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
+            padding: var(--space-4) var(--space-5);
+            border-bottom: 1px solid var(--color-divider);
         }
-
         .modal-close {
             background: none;
             border: none;
-            color: var(--text-secondary);
-            font-size: 1.5rem;
+            color: var(--color-text-secondary);
+            font-size: var(--text-xl);
             cursor: pointer;
         }
-
         .modal-body {
-            padding: 1.5rem;
+            padding: var(--space-5);
             max-height: 60vh;
             overflow-y: auto;
         }
-
-        .address-list {
-            margin-bottom: 1rem;
-        }
-
         .address-item {
-            padding: 1rem;
-            background: var(--bg-input);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-bg-sunken);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-2);
             cursor: pointer;
             border: 2px solid transparent;
-            transition: all 0.3s;
+            transition: all var(--duration-fast);
         }
-
-        .address-item:hover {
-            border-color: var(--primary);
-        }
-
-        .address-item.selected {
-            border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .address-name {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .address-detail {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .address-phone {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-        }
-
+        .address-item:hover { border-color: var(--color-accent); }
+        .address-item.selected { border-color: var(--color-accent); background: var(--color-accent-light); }
+        .address-name { font-weight: var(--weight-semibold); font-size: var(--text-sm); margin-bottom: 2px; }
+        .address-detail { color: var(--color-text-secondary); font-size: var(--text-xs); }
+        .address-phone { color: var(--color-text-secondary); font-size: var(--text-xs); margin-top: 2px; }
         .remark-input {
             width: 100%;
-            padding: 0.75rem;
-            background: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            margin-top: 1rem;
+            padding: var(--space-3);
+            background: var(--color-bg-sunken);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-sm);
+            margin-top: var(--space-4);
+            resize: vertical;
+            min-height: 60px;
         }
-
+        .remark-input:focus { outline: none; border-color: var(--color-accent); }
         .confirm-btn {
             width: 100%;
-            padding: 1rem;
-            background: var(--primary);
-            color: white;
+            padding: var(--space-3);
+            background: var(--color-accent);
+            color: #fff;
             border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: var(--radius-md);
+            font-size: var(--text-base);
+            font-weight: var(--weight-semibold);
             cursor: pointer;
-            margin-top: 1rem;
-            transition: background 0.3s;
+            margin-top: var(--space-4);
+            transition: all var(--duration-fast);
         }
-
-        .confirm-btn:hover {
-            background: var(--primary-dark);
-        }
-
-        /* Toast */
-        .toast {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            padding: 1rem 1.5rem;
-            background: var(--success);
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 300;
-            transform: translateX(120%);
-            transition: transform 0.3s;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-        }
-
-        .toast.error {
-            background: var(--danger);
-        }
+        .confirm-btn:hover { background: var(--color-accent-hover); }
 
         @media (max-width: 768px) {
-            .cart-layout {
-                flex-direction: column;
-            }
-
-            .cart-sidebar {
-                width: 100%;
-            }
-
-            .cart-item {
-                flex-wrap: wrap;
-            }
-
-            .item-actions {
-                flex-direction: row;
-                width: 100%;
-                justify-content: space-between;
-            }
+            .cart-layout { flex-direction: column; }
+            .cart-sidebar { width: 100%; }
+            .cart-item { flex-wrap: wrap; }
+            .item-actions { flex-direction: row; width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
 <body>
-    <div class="bg-animation"></div>
     <!-- Header -->
     <header class="header">
-        <div class="header-content">
-            <a href="/" class="logo">惠购商城</a>
-            <nav class="nav-links">
-                <a href="/">首页</a>
-                <a href="/product.html">商品</a>
-                <a href="/cart.html" class="active">购物车</a>
-                <a href="/orders.html">订单</a>
-                <a href="/user.html">我的</a>
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <div class="logo-mark"></div>
+                <div class="logo-text">惠购商城</div>
+            </a>
+            <nav class="nav">
+                <a href="/" class="nav-link">首页</a>
+                <a href="/product.html" class="nav-link">商品</a>
+                <a href="/cart.html" class="nav-link active">购物车</a>
+                <a href="/orders.html" class="nav-link">订单</a>
+                <a href="/user.html" class="nav-link">我的</a>
             </nav>
         </div>
     </header>
@@ -556,7 +283,6 @@
     <!-- Main Content -->
     <div class="main-content">
         <h1 class="page-title">我的购物车</h1>
-
         <div class="cart-layout">
             <div class="cart-items">
                 <div class="select-all">
@@ -564,42 +290,26 @@
                         <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
                         全选
                     </label>
-                    <span style="margin-left: auto; color: var(--text-secondary);">
+                    <span style="margin-left:auto; color:var(--color-text-secondary); font-size:var(--text-sm)">
                         共 <span id="totalCount">0</span> 件商品
                     </span>
                 </div>
-
                 <div id="cartList">
                     <div class="empty-cart">
-                        <div class="empty-icon">🛒</div>
+                        <div class="empty-icon"></div>
                         <p class="empty-text">购物车是空的</p>
-                        <a href="/product.html" class="shop-btn">去购物</a>
+                        <a href="/product.html" class="btn btn-primary">去购物</a>
                     </div>
                 </div>
             </div>
-
             <div class="cart-sidebar">
                 <div class="cart-summary">
                     <h3 class="summary-title">订单摘要</h3>
-                    <div class="summary-row">
-                        <span>商品数量</span>
-                        <span id="summaryCount">0 件</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>商品金额</span>
-                        <span id="summarySubtotal">¥0.00</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>运费</span>
-                        <span>免运费</span>
-                    </div>
-                    <div class="summary-row total">
-                        <span>合计</span>
-                        <span class="amount" id="summaryTotal">¥0.00</span>
-                    </div>
-                    <button class="checkout-btn" id="checkoutBtn" onclick="checkout()" disabled>
-                        去结算
-                    </button>
+                    <div class="summary-row"><span>商品数量</span><span id="summaryCount">0 件</span></div>
+                    <div class="summary-row"><span>商品金额</span><span id="summarySubtotal">¥0.00</span></div>
+                    <div class="summary-row"><span>运费</span><span>免运费</span></div>
+                    <div class="summary-row total"><span>合计</span><span class="amount" id="summaryTotal">¥0.00</span></div>
+                    <button class="checkout-btn" id="checkoutBtn" onclick="checkout()" disabled>去结算</button>
                 </div>
             </div>
         </div>
@@ -613,14 +323,13 @@
                 <button class="modal-close" onclick="closeAddressModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="address-list" id="addressList"></div>
+                <div id="addressList"></div>
                 <textarea class="remark-input" id="orderRemark" placeholder="订单备注（选填）"></textarea>
                 <button class="confirm-btn" onclick="confirmOrder()">确认下单</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script src="/static/common.js"></script>
@@ -630,62 +339,34 @@
         let addresses = [];
         let selectedAddressId = null;
 
-        // Check login
         function checkAuth() {
             const token = localStorage.getItem('token');
-            if (!token) {
-                showToast('请先登录', 'error');
-                setTimeout(() => window.location.href = '/user.html', 1000);
-                return false;
-            }
+            if (!token) { showToast('请先登录', 'error'); setTimeout(() => window.location.href = '/user.html', 1000); return false; }
             return true;
         }
 
-        // Load cart
         async function loadCart() {
             if (!checkAuth()) return;
-
             const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_BASE}/api/cart`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    cartItems = data.items || [];
-                    renderCart();
-                } else {
-                    showToast('加载购物车失败', 'error');
-                }
-            } catch (err) {
-                showToast('网络错误', 'error');
-            }
+                const res = await fetch(`${API_BASE}/api/cart`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) { const data = await res.json(); cartItems = data.items || []; renderCart(); }
+                else showToast('加载购物车失败', 'error');
+            } catch (err) { showToast('网络错误', 'error'); }
         }
 
-        // Render cart
         function renderCart() {
             const container = document.getElementById('cartList');
-
             if (cartItems.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-cart">
-                        <div class="empty-icon">🛒</div>
-                        <p class="empty-text">购物车是空的</p>
-                        <a href="/product.html" class="shop-btn">去购物</a>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-cart"><div class="empty-icon"></div><p class="empty-text">购物车是空的</p><a href="/product.html" class="btn btn-primary">去购物</a></div>`;
                 document.getElementById('totalCount').textContent = '0';
                 updateSummary();
                 return;
             }
-
             container.innerHTML = cartItems.map(item => `
                 <div class="cart-item" data-id="${item.id}">
-                    <input type="checkbox" class="item-checkbox"
-                        ${selectedItems.has(item.id) ? 'checked' : ''}
-                        onchange="toggleItem(${item.id})">
-                    <div class="item-image">${item.product_image ? `<img src="${item.product_image}" alt="${escapeHTML(item.product_name)}">` : '📦'}</div>
+                    <input type="checkbox" class="item-checkbox" ${selectedItems.has(item.id) ? 'checked' : ''} onchange="toggleItem(${item.id})">
+                    <div class="item-image"><img src="/static/products/product_${item.product_id}.jpg" alt="${escapeHTML(item.product_name)}" loading="lazy"></div>
                     <div class="item-info">
                         <div class="item-name">${escapeHTML(item.product_name)}</div>
                         <div class="item-platform">${escapeHTML(item.product_platform || '')}</div>
@@ -694,250 +375,120 @@
                     <div class="item-actions">
                         <div class="quantity-control">
                             <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity - 1})">-</button>
-                            <input type="number" class="quantity-input" value="${item.quantity}"
-                                onchange="updateQuantity(${item.id}, this.value)">
+                            <input type="number" class="quantity-input" value="${item.quantity}" onchange="updateQuantity(${item.id}, this.value)">
                             <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${item.quantity + 1})">+</button>
                         </div>
                         <div class="item-total">¥${(item.product_price * item.quantity).toFixed(2)}</div>
-                        <button class="delete-btn" onclick="removeItem(${item.id})">🗑️</button>
+                        <button class="delete-btn" onclick="removeItem(${item.id})">×</button>
                     </div>
-                </div>
-            `).join('');
-
+                </div>`).join('');
             document.getElementById('totalCount').textContent = cartItems.reduce((sum, item) => sum + item.quantity, 0);
             updateSummary();
         }
 
-        // Get product emoji
-        function getProductEmoji(category) {
-            const emojiMap = {
-                '手机': '📱',
-                '耳机': '🎧',
-                '电脑': '💻',
-                '平板': '📱',
-            };
-            return emojiMap[category] || '📦';
-        }
-
-        // Toggle item selection
         function toggleItem(itemId) {
-            if (selectedItems.has(itemId)) {
-                selectedItems.delete(itemId);
-            } else {
-                selectedItems.add(itemId);
-            }
+            if (selectedItems.has(itemId)) selectedItems.delete(itemId);
+            else selectedItems.add(itemId);
             updateSelectAll();
             updateSummary();
         }
-
-        // Toggle select all
         function toggleSelectAll() {
-            const selectAll = document.getElementById('selectAll').checked;
-            if (selectAll) {
-                cartItems.forEach(item => selectedItems.add(item.id));
-            } else {
-                selectedItems.clear();
-            }
+            const all = document.getElementById('selectAll').checked;
+            if (all) cartItems.forEach(item => selectedItems.add(item.id));
+            else selectedItems.clear();
             renderCart();
         }
-
-        // Update select all checkbox
         function updateSelectAll() {
-            const selectAll = document.getElementById('selectAll');
-            selectAll.checked = cartItems.length > 0 && selectedItems.size === cartItems.length;
+            document.getElementById('selectAll').checked = cartItems.length > 0 && selectedItems.size === cartItems.length;
         }
-
-        // Update summary
         function updateSummary() {
             const selected = cartItems.filter(item => selectedItems.has(item.id));
             const count = selected.reduce((sum, item) => sum + item.quantity, 0);
             const subtotal = selected.reduce((sum, item) => sum + (item.product_price * item.quantity), 0);
-
             document.getElementById('summaryCount').textContent = `${count} 件`;
             document.getElementById('summarySubtotal').textContent = `¥${subtotal.toFixed(2)}`;
             document.getElementById('summaryTotal').textContent = `¥${subtotal.toFixed(2)}`;
             document.getElementById('checkoutBtn').disabled = selected.length === 0;
         }
 
-        // Update quantity
         async function updateQuantity(itemId, newQuantity) {
             newQuantity = parseInt(newQuantity);
-            if (newQuantity < 1) {
-                removeItem(itemId);
-                return;
-            }
-
+            if (newQuantity < 1) { removeItem(itemId); return; }
             const token = localStorage.getItem('token');
             try {
                 const res = await fetch(`${API_BASE}/api/cart/${itemId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ quantity: newQuantity })
                 });
-
-                if (res.ok) {
-                    const item = cartItems.find(i => i.id === itemId);
-                    if (item) item.quantity = newQuantity;
-                    renderCart();
-                } else {
-                    const data = await res.json();
-                    showToast(data.detail || '更新失败', 'error');
-                }
-            } catch (err) {
-                showToast('网络错误', 'error');
-            }
+                if (res.ok) { const item = cartItems.find(i => i.id === itemId); if (item) item.quantity = newQuantity; renderCart(); }
+                else { const data = await res.json(); showToast(data.detail || '更新失败', 'error'); }
+            } catch (err) { showToast('网络错误', 'error'); }
         }
 
-        // Remove item
         async function removeItem(itemId) {
             const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_BASE}/api/cart/${itemId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (res.ok) {
-                    cartItems = cartItems.filter(i => i.id !== itemId);
-                    selectedItems.delete(itemId);
-                    renderCart();
-                    showToast('已移除');
-                } else {
-                    showToast('删除失败', 'error');
-                }
-            } catch (err) {
-                showToast('网络错误', 'error');
-            }
+                const res = await fetch(`${API_BASE}/api/cart/${itemId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) { cartItems = cartItems.filter(i => i.id !== itemId); selectedItems.delete(itemId); renderCart(); showToast('已移除'); }
+                else showToast('删除失败', 'error');
+            } catch (err) { showToast('网络错误', 'error'); }
         }
 
-        // Checkout
         async function checkout() {
-            if (selectedItems.size === 0) {
-                showToast('请选择商品', 'error');
-                return;
-            }
-
-            // Load addresses
+            if (selectedItems.size === 0) { showToast('请选择商品', 'error'); return; }
             const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_BASE}/api/user/addresses`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    addresses = Array.isArray(data) ? data : [];
-                    renderAddresses();
-                    document.getElementById('addressModal').style.display = 'block';
-                } else {
-                    showToast('获取地址失败', 'error');
-                }
-            } catch (err) {
-                showToast('网络错误', 'error');
-            }
+                const res = await fetch(`${API_BASE}/api/user/addresses`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) { const data = await res.json(); addresses = Array.isArray(data) ? data : []; renderAddresses(); document.getElementById('addressModal').style.display = 'block'; }
+                else showToast('获取地址失败', 'error');
+            } catch (err) { showToast('网络错误', 'error'); }
         }
 
-        // Render addresses
         function renderAddresses() {
             const container = document.getElementById('addressList');
-            if (addresses.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">暂无收货地址，请先添加</p>';
-                return;
-            }
-
+            if (addresses.length === 0) { container.innerHTML = '<p style="color:var(--color-text-secondary);text-align:center;padding:var(--space-4)">暂无收货地址，请先添加</p>'; return; }
             container.innerHTML = addresses.map(addr => `
-                <div class="address-item ${selectedAddressId === addr.id ? 'selected' : ''}"
-                    onclick="selectAddress(${addr.id})">
-                    <div class="address-name">${escapeHTML(addr.name)} ${addr.is_default ? '<span style="color: var(--primary); font-size: 0.8rem;">默认</span>' : ''}</div>
+                <div class="address-item ${selectedAddressId === addr.id ? 'selected' : ''}" onclick="selectAddress(${addr.id})">
+                    <div class="address-name">${escapeHTML(addr.name)} ${addr.is_default ? '<span style="color:var(--color-accent);font-size:var(--text-xs)">默认</span>' : ''}</div>
                     <div class="address-detail">${escapeHTML(addr.province || '')}${escapeHTML(addr.city || '')}${escapeHTML(addr.district || '')}${escapeHTML(addr.detail || '')}</div>
                     <div class="address-phone">${escapeHTML(addr.phone)}</div>
-                </div>
-            `).join('');
-
-            // Auto select default
+                </div>`).join('');
             if (!selectedAddressId) {
-                const defaultAddr = addresses.find(a => a.is_default);
-                if (defaultAddr) selectedAddressId = defaultAddr.id;
-                else if (addresses.length > 0) selectedAddressId = addresses[0].id;
+                const def = addresses.find(a => a.is_default);
+                selectedAddressId = def ? def.id : addresses[0].id;
                 renderAddresses();
             }
         }
+        function selectAddress(id) { selectedAddressId = id; renderAddresses(); }
+        function closeAddressModal() { document.getElementById('addressModal').style.display = 'none'; }
 
-        // Select address
-        function selectAddress(id) {
-            selectedAddressId = id;
-            renderAddresses();
-        }
-
-        // Close address modal
-        function closeAddressModal() {
-            document.getElementById('addressModal').style.display = 'none';
-        }
-
-        // Confirm order
         async function confirmOrder() {
-            if (!selectedAddressId) {
-                showToast('请选择收货地址', 'error');
-                return;
-            }
-
+            if (!selectedAddressId) { showToast('请选择收货地址', 'error'); return; }
             const token = localStorage.getItem('token');
             const remark = document.getElementById('orderRemark').value;
-
             try {
                 const res = await fetch(`${API_BASE}/api/orders`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        address_id: selectedAddressId,
-                        remark: remark,
-                        cart_item_ids: Array.from(selectedItems)
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ address_id: selectedAddressId, remark, cart_item_ids: Array.from(selectedItems) })
                 });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    showToast('下单成功');
-                    closeAddressModal();
-
-                    // Remove ordered items from cart
-                    cartItems = cartItems.filter(i => !selectedItems.has(i.id));
-                    selectedItems.clear();
-                    renderCart();
-
-                    // Redirect to orders
-                    setTimeout(() => window.location.href = '/orders.html', 1500);
-                } else {
-                    const data = await res.json();
-                    showToast(data.detail || '下单失败', 'error');
-                }
-            } catch (err) {
-                showToast('网络错误', 'error');
-            }
+                if (res.ok) { showToast('下单成功'); closeAddressModal(); cartItems = cartItems.filter(i => !selectedItems.has(i.id)); selectedItems.clear(); renderCart(); setTimeout(() => window.location.href = '/orders.html', 1500); }
+                else { const data = await res.json(); showToast(data.detail || '下单失败', 'error'); }
+            } catch (err) { showToast('网络错误', 'error'); }
         }
 
-        // Show toast
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
-            toast.className = `toast ${type}`;
+            toast.style.cssText = `position:fixed;top:80px;right:20px;padding:var(--space-3) var(--space-5);background:${type === 'error' ? 'var(--color-danger)' : 'var(--color-success)'};color:#fff;border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);z-index:300;transform:translateX(120%);transition:transform var(--duration-normal);font-size:var(--text-sm)`;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // Close modal on outside click
-        document.getElementById('addressModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('addressModal')) closeAddressModal();
-        });
-
-        // Initialize
+        document.getElementById('addressModal').addEventListener('click', (e) => { if (e.target === document.getElementById('addressModal')) closeAddressModal(); });
         loadCart();
     </script>
+    <script src="/static/ws.js"></script>
 </body>
 </html>

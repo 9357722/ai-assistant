@@ -18,7 +18,7 @@ jobs:
       with:
         host: ${{ secrets.ECS_HOST }}
         username: ${{ secrets.ECS_USERNAME }}
-        key: ${{ secrets.ECS_PRIVATE_KEY }}
+        password: ${{ secrets.ECS_PASSWORD }}
         script: |
           cd /root/ai-assistant
           git pull origin main

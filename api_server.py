@@ -30,10 +30,13 @@ from routes.cart import router as cart_router
 from routes.order import router as order_router
 from routes.ai import router as ai_router
 from routes.admin import router as admin_router
+from routes.merchant import router as merchant_router
 
 # ================== FastAPI 应用 ==================
 import config
 from db import init_pool, close_pool
+from auth import decode_token
+from services.websocket_manager import ws_manager
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
@@ -46,11 +49,17 @@ async def lifespan(app):
 app = FastAPI(title="AI 智能电商导购平台", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:8000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8000",
+        "http://120.55.95.8:8000",
+        "https://physiology-handle-albuquerque-collect.trycloudflare.com",
+        "https://serial-helping-aruba-star.trycloudflare.com",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 # 注册路由
@@ -60,6 +69,7 @@ app.include_router(cart_router)
 app.include_router(order_router)
 app.include_router(ai_router)
 app.include_router(admin_router)
+app.include_router(merchant_router)
 
 # ================== 全局异常处理 ==================
 
@@ -85,11 +95,19 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
     """记录每个请求的方法、路径、耗时"""
+    # Debug: Log all incoming requests
+    client_ip = request.client.host if request.client else "unknown"
+    logger.info(f"[DEBUG] Incoming request: {request.method} {request.url.path} from {client_ip}")
+
     start = time.time()
-    response = await call_next(request)
-    elapsed = round((time.time() - start) * 1000, 1)
-    logger.info(f"{request.method} {request.url.path} → {response.status_code} ({elapsed}ms)")
-    return response
+    try:
+        response = await call_next(request)
+        elapsed = round((time.time() - start) * 1000, 1)
+        logger.info(f"{request.method} {request.url.path} → {response.status_code} ({elapsed}ms)")
+        return response
+    except Exception as e:
+        logger.error(f"[DEBUG] Request failed: {request.method} {request.url.path} - {e}", exc_info=True)
+        raise
 
 # ================== 健康检查 ==================
 
@@ -106,6 +124,41 @@ async def health_check():
     except Exception as e:
         return JSONResponse(status_code=503, content={"status": "error", "database": str(e)})
 
+# ================== WebSocket 实时通知 ==================
+from fastapi import WebSocket, WebSocketDisconnect
+
+@app.websocket("/ws/{token}")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    """
+    WebSocket 连接端点
+    客户端通过 ws://host/ws/{jwt_token} 连接
+    """
+    # 验证 token
+    payload = decode_token(token)
+    if not payload:
+        await websocket.close(code=4001, reason="无效的 token")
+        return
+    user_id = payload.get("user_id")
+    if not user_id:
+        await websocket.close(code=4001, reason="token 中缺少 user_id")
+        return
+
+    await ws_manager.connect(websocket, user_id)
+    try:
+        # 发送连接成功消息
+        await websocket.send_json({"type": "connected", "message": "实时通知已连接"})
+        # 保持连接，监听客户端消息
+        while True:
+            data = await websocket.receive_text()
+            # 客户端可以发送 ping 保活
+            if data == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket, user_id)
+    except Exception as e:
+        logger.error(f"WebSocket error: user_id={user_id}, {e}")
+        ws_manager.disconnect(websocket, user_id)
+
 # 静态文件服务
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
@@ -119,7 +172,8 @@ def _get_valid_api_keys() -> set:
         raw = os.getenv("AGENT_API_KEYS", "")
         _valid_api_keys = {k.strip() for k in raw.split(",") if k.strip()}
         if not _valid_api_keys:
-            _valid_api_keys = {"sk-agent-key-001"}  # 开发兜底
+            logger.warning("AGENT_API_KEYS not set, Agent endpoints disabled")
+            _valid_api_keys = set()
     return _valid_api_keys
 
 def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
@@ -128,16 +182,32 @@ def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
         raise HTTPException(status_code=401, detail="无效的 API Key")
     return x_api_key
 
-# ================== 请求限流 ==================
-rate_limit_store = defaultdict(list)
+# ================== 请求限流（Redis 滑动窗口） ==================
 
 def check_rate_limit(api_key: str, max_requests: int = 30, window: int = 60):
-    """检查请求频率是否超限"""
-    now = time.time()
-    rate_limit_store[api_key] = [t for t in rate_limit_store[api_key] if now - t < window]
-    if len(rate_limit_store[api_key]) >= max_requests:
-        raise HTTPException(status_code=429, detail="请求过于频繁，请稍后再试")
-    rate_limit_store[api_key].append(now)
+    """
+    基于 Redis 的滑动窗口限流
+    比内存限流更可靠：多实例部署时共享限流状态
+    """
+    try:
+        from services.cache import get_redis
+        import redis
+        r = get_redis()
+        key = f"rate_limit:{api_key}"
+        now = time.time()
+        pipe = r.pipeline()
+        pipe.zremrangebyscore(key, 0, now - window)  # 清除窗口外的记录
+        pipe.zadd(key, {str(now): now})               # 添加当前请求
+        pipe.zcard(key)                                # 统计窗口内请求数
+        pipe.expire(key, window)                       # 设置过期时间
+        _, _, count, _ = pipe.execute()
+        if count > max_requests:
+            raise HTTPException(status_code=429, detail="请求过于频繁，请稍后再试")
+    except HTTPException:
+        raise
+    except Exception:
+        # Redis 不可用时降级为不限流（保证服务可用）
+        pass
 
 # ================== 数据模型 ==================
 class AgentRequest(BaseModel):
@@ -235,6 +305,11 @@ async def user_page():
 @app.get("/chat.html", response_class=HTMLResponse)
 async def chat_page():
     async with aiofiles.open(os.path.join(BASE_DIR, "static", "chat.html"), "r", encoding="utf-8") as f:
+        return await f.read()
+
+@app.get("/merchant.html", response_class=HTMLResponse)
+async def merchant_page():
+    async with aiofiles.open(os.path.join(BASE_DIR, "static", "merchant.html"), "r", encoding="utf-8") as f:
         return await f.read()
 
 if __name__ == "__main__":

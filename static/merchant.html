@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商家后台 - 惠购商城</title>
+    <link rel="stylesheet" href="/static/design-system.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        /* 顶部导航 */
+        .merchant-header {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0071e3;
+        }
+
+        .logo span {
+            color: #666;
+            font-weight: 400;
+            margin-left: 8px;
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .switch-btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .switch-btn:hover {
+            background: #e8e8e8;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #0071e3;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            width: 200px;
+            background: #fff;
+            border-right: 1px solid #e8e8e8;
+            padding: 16px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .nav-item.active {
+            background: #e8f4fd;
+            color: #0071e3;
+            border-left-color: #0071e3;
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            margin-left: 200px;
+            margin-top: 60px;
+            padding: 24px;
+            min-height: calc(100vh - 60px);
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .stat-value.accent {
+            color: #0071e3;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            color: #52c41a;
+            margin-top: 4px;
+        }
+
+        .stat-change.negative {
+            color: #ff4d4f;
+        }
+
+        /* 内容卡片 */
+        .content-card {
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* 表格 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .data-table th {
+            background: #fafafa;
+            font-weight: 500;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .data-table td {
+            font-size: 14px;
+        }
+
+        .data-table tr:hover td {
+            background: #fafafa;
+        }
+
+        /* 状态标签 */
+        .status-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .status-tag.success { background: #f6ffed; color: #52c41a; }
+        .status-tag.warning { background: #fff7e6; color: #faad14; }
+        .status-tag.error { background: #fff2f0; color: #ff4d4f; }
+        .status-tag.info { background: #e6f7ff; color: #1890ff; }
+
+        /* 操作按钮 */
+        .btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: #0071e3;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #0062cc;
+        }
+
+        .btn-default {
+            background: #fff;
+            border-color: #d9d9d9;
+            color: #666;
+        }
+
+        .btn-default:hover {
+            border-color: #0071e3;
+            color: #0071e3;
+        }
+
+        .btn-danger {
+            background: #fff;
+            border-color: #ff4d4f;
+            color: #ff4d4f;
+        }
+
+        .btn-danger:hover {
+            background: #ff4d4f;
+            color: #fff;
+        }
+
+        /* 表单 */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* 图片上传 */
+        .upload-area {
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: #0071e3;
+            background: #f0f7ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #ccc;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .upload-hint {
+            color: #ccc;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .image-preview {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+        }
+
+        /* 页面切换 */
+        .page-section {
+            display: none;
+        }
+
+        .page-section.active {
+            display: block;
+        }
+
+        /* 模态框 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            padding: 12px 20px;
+            background: #333;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.success { background: #52c41a; }
+        .toast.error { background: #ff4d4f; }
+
+        /* 图表占位 */
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8f4fd 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        /* 优惠券样式 */
+        .coupon-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            border-radius: 12px;
+            padding: 20px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coupon-card::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background: #f5f7fa;
+            border-radius: 50%;
+        }
+
+        .coupon-card::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background: #f5f7fa;
+            border-radius: 50%;
+        }
+
+        .coupon-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .coupon-value span {
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .coupon-name {
+            margin-top: 8px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .coupon-condition {
+            margin-top: 4px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <header class="merchant-header">
+        <div class="header-left">
+            <div class="logo">惠购商家<span>Merchant Center</span></div>
+        </div>
+        <div class="header-right">
+            <button class="switch-btn" onclick="window.location.href='/'">切换到买家</button>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">商</div>
+                <span id="shopName">我的店铺</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <nav class="sidebar">
+        <div class="nav-item active" data-page="dashboard">
+            <span class="nav-icon">&#9632;</span>
+            <span>数据概览</span>
+        </div>
+        <div class="nav-item" data-page="products">
+            <span class="nav-icon">&#9632;</span>
+            <span>商品管理</span>
+        </div>
+        <div class="nav-item" data-page="orders">
+            <span class="nav-icon">&#9632;</span>
+            <span>订单管理</span>
+        </div>
+        <div class="nav-item" data-page="coupons">
+            <span class="nav-icon">&#9632;</span>
+            <span>营销中心</span>
+        </div>
+        <div class="nav-item" data-page="reviews">
+            <span class="nav-icon">&#9632;</span>
+            <span>客户反馈</span>
+        </div>
+        <div class="nav-item" data-page="settings">
+            <span class="nav-icon">&#9632;</span>
+            <span>店铺设置</span>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+        <!-- 数据概览 -->
+        <section id="page-dashboard" class="page-section active">
+            <div class="page-header">
+                <h1 class="page-title">数据概览</h1>
+                <p class="page-subtitle">实时监控您的店铺运营数据</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">今日订单</div>
+                    <div class="stat-value accent" id="todayOrders">0</div>
+                    <div class="stat-change">+12% 较昨日</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">今日销售额</div>
+                    <div class="stat-value" id="todaySales">¥0</div>
+                    <div class="stat-change">+8% 较昨日</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">待发货订单</div>
+                    <div class="stat-value warning" id="pendingOrders">0</div>
+                    <div class="stat-change negative">需要及时处理</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">商品总数</div>
+                    <div class="stat-value" id="totalProducts">0</div>
+                    <div class="stat-change">在售商品</div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="card-title">销售趋势</span>
+                    <select class="form-input" style="width: auto;">
+                        <option>最近7天</option>
+                        <option>最近30天</option>
+                    </select>
+                </div>
+                <div class="card-body">
+                    <div class="chart-placeholder">
+                        销售趋势图（开发中）
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 商品管理 -->
+        <section id="page-products" class="page-section">
+            <div class="page-header">
+                <h1 class="page-title">商品管理</h1>
+                <p class="page-subtitle">管理您店铺的所有商品</p>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="card-title">商品列表</span>
+                    <button class="btn btn-primary" onclick="showAddProductModal()">+ 添加商品</button>
+                </div>
+                <div class="card-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>商品图片</th>
+                                <th>商品名称</th>
+                                <th>价格</th>
+                                <th>库存</th>
+                                <th>销量</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTable">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">&#128230;</div>
+                                        <p>暂无商品</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 订单管理 -->
+        <section id="page-orders" class="page-section">
+            <div class="page-header">
+                <h1 class="page-title">订单管理</h1>
+                <p class="page-subtitle">查看和处理您商品的订单</p>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="card-title">订单列表</span>
+                    <div>
+                        <select id="orderStatusFilter" class="form-input" style="width: auto;" onchange="loadOrders()">
+                            <option value="">全部状态</option>
+                            <option value="pending">待付款</option>
+                            <option value="paid">待发货</option>
+                            <option value="shipped">已发货</option>
+                            <option value="completed">已完成</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>订单号</th>
+                                <th>买家</th>
+                                <th>商品</th>
+                                <th>金额</th>
+                                <th>状态</th>
+                                <th>下单时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">&#128230;</div>
+                                        <p>暂无订单</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 营销中心 -->
+        <section id="page-coupons" class="page-section">
+            <div class="page-header">
+                <h1 class="page-title">营销中心</h1>
+                <p class="page-subtitle">创建优惠券和促销活动</p>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="card-title">优惠券管理</span>
+                    <button class="btn btn-primary" onclick="showAddCouponModal()">+ 创建优惠券</button>
+                </div>
+                <div class="card-body">
+                    <div id="couponsList" class="stats-grid">
+                        <div class="empty-state" style="grid-column: span 4;">
+                            <div class="empty-icon">&#127915;</div>
+                            <p>暂无优惠券</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 客户反馈 -->
+        <section id="page-reviews" class="page-section">
+            <div class="page-header">
+                <h1 class="page-title">客户反馈</h1>
+                <p class="page-subtitle">查看用户评价和反馈</p>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="card-title">最新评价</span>
+                </div>
+                <div class="card-body">
+                    <div class="empty-state">
+                        <div class="empty-icon">&#128172;</div>
+                        <p>暂无评价</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 店铺设置 -->
+        <section id="page-settings" class="page-section">
+            <div class="page-header">
+                <h1 class="page-title">店铺设置</h1>
+                <p class="page-subtitle">管理您的店铺信息</p>
+            </div>
+
+            <div class="content-card">
+                <div class="card-header">
+                    <span class="card-title">基本信息</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">店铺名称</label>
+                        <input type="text" class="form-input" id="settingsShopName" placeholder="请输入店铺名称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">店铺简介</label>
+                        <textarea class="form-input form-textarea" id="settingsShopDesc" placeholder="请输入店铺简介"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">联系电话</label>
+                        <input type="text" class="form-input" id="settingsPhone" placeholder="请输入联系电话">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">联系邮箱</label>
+                        <input type="email" class="form-input" id="settingsEmail" placeholder="请输入联系邮箱">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">店铺地址</label>
+                        <textarea class="form-input form-textarea" id="settingsAddress" placeholder="请输入店铺地址"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveShopSettings()">保存设置</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 添加商品模态框 -->
+    <div class="modal-overlay" id="addProductModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">添加商品</span>
+                <button class="modal-close" onclick="closeModal('addProductModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">商品名称 *</label>
+                    <input type="text" class="form-input" id="productName" placeholder="请输入商品名称">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">价格 *</label>
+                    <input type="number" class="form-input" id="productPrice" placeholder="请输入价格" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">分类</label>
+                    <select class="form-input" id="productCategory">
+                        <option value="">请选择分类</option>
+                        <option value="6">手机</option>
+                        <option value="7">电脑</option>
+                        <option value="8">平板</option>
+                        <option value="9">耳机</option>
+                        <option value="10">智能手表</option>
+                        <option value="11">相机</option>
+                        <option value="12">服装</option>
+                        <option value="13">鞋靴</option>
+                        <option value="14">箱包</option>
+                        <option value="15">美妆</option>
+                        <option value="16">食品</option>
+                        <option value="17">家居</option>
+                        <option value="18">家电</option>
+                        <option value="19">母婴</option>
+                        <option value="20">运动</option>
+                        <option value="21">图书</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">商品图片</label>
+                    <div class="upload-area" onclick="document.getElementById('imageInput').click()">
+                        <div class="upload-icon">&#128247;</div>
+                        <div class="upload-text">点击上传图片</div>
+                        <div class="upload-hint">支持 JPG、PNG、WebP，最大 5MB</div>
+                    </div>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    <div id="imagePreview" style="margin-top: 12px;"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">商品描述</label>
+                    <textarea class="form-input form-textarea" id="productDesc" placeholder="请输入商品描述"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">库存</label>
+                    <input type="number" class="form-input" id="productStock" value="100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeModal('addProductModal')">取消</button>
+                <button class="btn btn-primary" onclick="addProduct()">确定添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加优惠券模态框 -->
+    <div class="modal-overlay" id="addCouponModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">创建优惠券</span>
+                <button class="modal-close" onclick="closeModal('addCouponModal')">&times;</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeModal('addCouponModal')">取消</button>
+                <button class="btn btn-primary" onclick="addCoupon()">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="/static/common.js"></script>
+    <script>
+        let currentPage = 'dashboard';
+        let uploadedImageUrl = '';
+
+        // ================================================================
+        // 初始化
+        // ================================================================
+
+        async function init() {
+            await checkMerchantStatus();
+            loadDashboard();
+        }
+
+        async function checkMerchantStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/info`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                if (!data.is_merchant) {
+                    // 不是商家，显示注册提示
+                    if (confirm('您还不是商家，是否注册成为商家？')) {
+                        showRegisterModal();
+                    } else {
+                        window.location.href = '/';
+                    }
+                    return;
+                }
+                document.getElementById('shopName').textContent = data.merchant.shop_name;
+                document.getElementById('settingsShopName').value = data.merchant.shop_name || '';
+                document.getElementById('settingsShopDesc').value = data.merchant.shop_description || '';
+                document.getElementById('settingsPhone').value = data.merchant.contact_phone || '';
+                document.getElementById('settingsEmail').value = data.merchant.contact_email || '';
+                document.getElementById('settingsAddress').value = data.merchant.address || '';
+            } catch (err) {
+                console.error('检查商家状态失败:', err);
+                window.location.href = '/user.html';
+            }
+        }
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('token');
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        }
+
+        // ================================================================
+        // 页面切换
+        // ================================================================
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.dataset.page;
+                switchPage(page);
+            });
+        });
+
+        function switchPage(page) {
+            currentPage = page;
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+
+            // 加载对应页面数据
+            switch(page) {
+                case 'dashboard': loadDashboard(); break;
+                case 'products': loadProducts(); break;
+                case 'orders': loadOrders(); break;
+                case 'coupons': loadCoupons(); break;
+            }
+        }
+
+        // ================================================================
+        // 数据概览
+        // ================================================================
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/dashboard`, {
+                    headers: getAuthHeaders()
+                });
+                if (!res.ok) {
+                    console.error('加载数据失败:', res.status);
+                    return;
+                }
+                const data = await res.json();
+                document.getElementById('todayOrders').textContent = data.today_orders || 0;
+                document.getElementById('todaySales').textContent = `¥${(data.today_sales || 0).toFixed(2)}`;
+                document.getElementById('pendingOrders').textContent = data.pending_orders || 0;
+                document.getElementById('totalProducts').textContent = data.total_products || 0;
+            } catch (err) {
+                console.error('加载数据失败:', err);
+            }
+        }
+
+        // ================================================================
+        // 商品管理
+        // ================================================================
+
+        async function loadProducts() {
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/products`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                renderProducts(data.items || []);
+            } catch (err) {
+                console.error('加载商品失败:', err);
+            }
+        }
+
+        function renderProducts(products) {
+            const tbody = document.getElementById('productsTable');
+            if (!products.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon">&#128230;</div>
+                                <p>暂无商品，点击右上角添加</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td><img src="/static/products/product_${p.id}.jpg" style="width:60px;height:60px;object-fit:cover;border-radius:4px;"></td>
+                    <td>${escapeHTML(p.name)}</td>
+                    <td>¥${p.price}</td>
+                    <td>${p.stock}</td>
+                    <td>${p.sales || 0}</td>
+                    <td><span class="status-tag ${p.status === 'on_sale' ? 'success' : 'error'}">${p.status === 'on_sale' ? '在售' : '下架'}</span></td>
+                    <td>
+                        <button class="btn btn-default" onclick="editProduct(${p.id})">编辑</button>
+                        <button class="btn btn-danger" onclick="deleteProduct(${p.id})">删除</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showAddProductModal() {
+            document.getElementById('addProductModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/upload-image`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.url) {
+                    uploadedImageUrl = data.url;
+                    document.getElementById('imagePreview').innerHTML = `
+                        <img src="${data.url}" class="image-preview">
+                    `;
+                    showToast('图片上传成功', 'success');
+                }
+            } catch (err) {
+                showToast('图片上传失败', 'error');
+            }
+        }
+
+        async function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = document.getElementById('productPrice').value;
+            const category_id = document.getElementById('productCategory').value;
+            const description = document.getElementById('productDesc').value;
+            const stock = document.getElementById('productStock').value;
+
+            if (!name || !price) {
+                showToast('请填写商品名称和价格', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/products`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({
+                        name,
+                        price: parseFloat(price),
+                        category_id: category_id ? parseInt(category_id) : null,
+                        description,
+                        main_image: uploadedImageUrl,
+                        stock: parseInt(stock) || 100
+                    })
+                });
+                const data = await res.json();
+                if (data.product_id) {
+                    showToast('商品添加成功', 'success');
+                    closeModal('addProductModal');
+                    loadProducts();
+                    // 清空表单
+                    document.getElementById('productName').value = '';
+                    document.getElementById('productPrice').value = '';
+                    document.getElementById('productCategory').value = '';
+                    document.getElementById('productDesc').value = '';
+                    document.getElementById('productStock').value = '100';
+                    document.getElementById('imagePreview').innerHTML = '';
+                    uploadedImageUrl = '';
+                }
+            } catch (err) {
+                showToast('添加失败', 'error');
+            }
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm('确定要删除这个商品吗？')) return;
+
+            try {
+                await fetch(`${API_BASE}/api/merchant/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                showToast('删除成功', 'success');
+                loadProducts();
+            } catch (err) {
+                showToast('删除失败', 'error');
+            }
+        }
+
+        // ================================================================
+        // 订单管理
+        // ================================================================
+
+        async function loadOrders() {
+            const status = document.getElementById('orderStatusFilter').value;
+            try {
+                let url = `${API_BASE}/api/merchant/orders`;
+                if (status) url += `?status=${status}`;
+                const res = await fetch(url, { headers: getAuthHeaders() });
+                const data = await res.json();
+                renderOrders(data.items || []);
+            } catch (err) {
+                console.error('加载订单失败:', err);
+            }
+        }
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('ordersTable');
+            if (!orders.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon">&#128230;</div>
+                                <p>暂无订单</p>
+                            </div>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            const statusMap = {
+                'pending': '待付款',
+                'paid': '待发货',
+                'shipped': '已发货',
+                'completed': '已完成'
+            };
+
+            tbody.innerHTML = orders.map(o => `
+                <tr>
+                    <td>#${o.id}</td>
+                    <td>${escapeHTML(o.buyer_name || '未知')}</td>
+                    <td>-</td>
+                    <td>¥${o.total_amount || 0}</td>
+                    <td><span class="status-tag info">${statusMap[o.status] || o.status}</span></td>
+                    <td>${o.created_at ? new Date(o.created_at).toLocaleString() : '-'}</td>
+                    <td>
+                        ${o.status === 'paid' ? `<button class="btn btn-primary" onclick="shipOrder(${o.id})">发货</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function shipOrder(orderId) {
+            try {
+                await fetch(`${API_BASE}/api/merchant/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({ status: 'shipped' })
+                });
+                showToast('发货成功', 'success');
+                loadOrders();
+            } catch (err) {
+                showToast('操作失败', 'error');
+            }
+        }
+
+        // ================================================================
+        // 优惠券管理
+        // ================================================================
+
+        async function loadCoupons() {
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/coupons`, {
+                    headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                renderCoupons(data || []);
+            } catch (err) {
+                console.error('加载优惠券失败:', err);
+            }
+        }
+
+        function renderCoupons(coupons) {
+            const container = document.getElementById('couponsList');
+            if (!coupons.length) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: span 4;">
+                        <div class="empty-icon">&#127915;</div>
+                        <p>暂无优惠券，点击右上角创建</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = coupons.map(c => `
+                <div class="coupon-card">
+                    <div class="coupon-value">${c.type === 'fixed' ? '¥' + c.value : c.value + '%'}</div>
+                    <div class="coupon-name">${escapeHTML(c.name)}</div>
+                    <div class="coupon-condition">满${c.min_amount}可用</div>
+                </div>
+            `).join('');
+        }
+
+        function showAddCouponModal() {
+            document.getElementById('addCouponModal').classList.add('active');
+        }
+
+        async function addCoupon() {
+            // TODO: 完善优惠券创建表单
+            showToast('功能开发中', 'success');
+        }
+
+        // ================================================================
+        // 店铺设置
+        // ================================================================
+
+        async function saveShopSettings() {
+            try {
+                await fetch(`${API_BASE}/api/merchant/info`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({
+                        shop_name: document.getElementById('settingsShopName').value,
+                        shop_description: document.getElementById('settingsShopDesc').value,
+                        contact_phone: document.getElementById('settingsPhone').value,
+                        contact_email: document.getElementById('settingsEmail').value,
+                        address: document.getElementById('settingsAddress').value
+                    })
+                });
+                showToast('保存成功', 'success');
+                checkMerchantStatus();
+            } catch (err) {
+                showToast('保存失败', 'error');
+            }
+        }
+
+        // ================================================================
+        // 工具函数
+        // ================================================================
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>

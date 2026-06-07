@@ -544,6 +544,198 @@
             font-size: 12px;
             opacity: 0.8;
         }
+
+        /* 智能助手样式 */
+        .agent-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: calc(100vh - 180px);
+        }
+
+        .agent-shortcuts {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .shortcut-card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .shortcut-card:hover {
+            border-color: #0071e3;
+            background: #f0f7ff;
+        }
+
+        .shortcut-icon {
+            font-size: 20px;
+        }
+
+        .shortcut-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, #0071e3, #5ac8fa);
+            color: #fff;
+        }
+
+        .message.user .message-avatar {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .message.assistant .message-content {
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .message.user .message-content {
+            background: #0071e3;
+            color: #fff;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid #e8e8e8;
+            background: #fafafa;
+        }
+
+        .chat-input-area textarea {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            resize: none;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .chat-input-area textarea:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+
+        .chat-input-area button {
+            width: 48px;
+            height: 48px;
+            background: #0071e3;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.2s;
+        }
+
+        .chat-input-area button:hover {
+            background: #0062cc;
+        }
+
+        .chat-input-area button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        .agent-product-form {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar .nav-item:last-child {
+            margin-top: auto;
+        }
     </style>
 </head>
 <body>
@@ -586,6 +778,10 @@
         <div class="nav-item" data-page="settings">
             <span class="nav-icon">&#9632;</span>
             <span>店铺设置</span>
+        </div>
+        <div class="nav-item" data-page="agent" style="margin-top: auto; border-top: 1px solid #e8e8e8;">
+            <span class="nav-icon">&#10024;</span>
+            <span>智能助手</span>
         </div>
     </nav>
 
@@ -801,6 +997,110 @@
                         <textarea class="form-input form-textarea" id="settingsAddress" placeholder="请输入店铺地址"></textarea>
                     </div>
                     <button class="btn btn-primary" onclick="saveShopSettings()">保存设置</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 智能助手 -->
+        <section id="page-agent" class="page-section">
+            <div class="page-header">
+                <h1 class="page-title">智能助手</h1>
+                <p class="page-subtitle">AI驱动的商家助手，帮您高效运营</p>
+            </div>
+
+            <div class="agent-container">
+                <!-- 快捷操作 -->
+                <div class="agent-shortcuts">
+                    <div class="shortcut-card" onclick="sendAgentMessage('查看今日经营数据')">
+                        <div class="shortcut-icon">&#128202;</div>
+                        <div class="shortcut-text">数据概览</div>
+                    </div>
+                    <div class="shortcut-card" onclick="sendAgentMessage('查看热销商品')">
+                        <div class="shortcut-icon">&#128176;</div>
+                        <div class="shortcut-text">热销商品</div>
+                    </div>
+                    <div class="shortcut-card" onclick="sendAgentMessage('查看库存预警')">
+                        <div class="shortcut-icon">&#9888;</div>
+                        <div class="shortcut-text">库存预警</div>
+                    </div>
+                    <div class="shortcut-card" onclick="sendAgentMessage('我想上传一个新商品')">
+                        <div class="shortcut-icon">&#128230;</div>
+                        <div class="shortcut-text">上传商品</div>
+                    </div>
+                    <div class="shortcut-card" onclick="sendAgentMessage('给我一些经营建议')">
+                        <div class="shortcut-icon">&#128161;</div>
+                        <div class="shortcut-text">经营建议</div>
+                    </div>
+                </div>
+
+                <!-- 对话区域 -->
+                <div class="chat-container">
+                    <div class="chat-messages" id="agentChatMessages">
+                        <div class="message assistant">
+                            <div class="message-avatar">助</div>
+                            <div class="message-content">
+                                您好！我是您的智能商家助手。我可以帮您：<br><br>
+                                - <strong>上传商品</strong>：告诉我商品信息，我帮您生成标题和描述<br>
+                                - <strong>数据分析</strong>：查看销售趋势、热销商品<br>
+                                - <strong>经营建议</strong>：获取定价、营销建议<br><br>
+                                请问有什么可以帮您的？
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <textarea id="agentInput" placeholder="输入消息... (Enter发送, Shift+Enter换行)" rows="2"></textarea>
+                        <button id="agentSendBtn" onclick="sendAgentMessage()">
+                            <span>&#10148;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 商品表单（AI生成后显示） -->
+                <div class="agent-product-form" id="agentProductForm" style="display: none;">
+                    <div class="card-header">
+                        <span class="card-title">AI生成的商品信息</span>
+                        <button class="btn btn-default" onclick="hideAgentProductForm()">取消</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">商品名称</label>
+                            <input type="text" class="form-input" id="agentProductName">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">价格</label>
+                            <input type="number" class="form-input" id="agentProductPrice">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">分类</label>
+                            <select class="form-input" id="agentProductCategory">
+                                <option value="6">手机</option>
+                                <option value="7">电脑</option>
+                                <option value="8">平板</option>
+                                <option value="9">耳机</option>
+                                <option value="10">智能手表</option>
+                                <option value="11">相机</option>
+                                <option value="12">服装</option>
+                                <option value="13">鞋靴</option>
+                                <option value="14">箱包</option>
+                                <option value="15">美妆</option>
+                                <option value="16">食品</option>
+                                <option value="17">家居</option>
+                                <option value="18">家电</option>
+                                <option value="19">母婴</option>
+                                <option value="20">运动</option>
+                                <option value="21">图书</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">商品描述</label>
+                            <textarea class="form-input form-textarea" id="agentProductDesc"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">库存</label>
+                            <input type="number" class="form-input" id="agentProductStock" value="100">
+                        </div>
+                        <button class="btn btn-primary" onclick="confirmAgentProduct()">确认添加商品</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1286,6 +1586,172 @@
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
             })[char]);
         }
+
+        // ================================================================
+        // 智能助手 Agent
+        // ================================================================
+
+        let agentChatHistory = [];
+        let agentProductData = null;
+
+        async function sendAgentMessage(prefill) {
+            const input = document.getElementById('agentInput');
+            const message = prefill || input.value.trim();
+            if (!message) return;
+
+            // 显示用户消息
+            appendMessage('user', message);
+            input.value = '';
+            document.getElementById('agentSendBtn').disabled = true;
+
+            // 显示正在输入
+            const typingId = showTyping();
+
+            // 添加到历史
+            agentChatHistory.push({ role: 'user', content: message });
+
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/agent/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        context: agentChatHistory.slice(-5)
+                    })
+                });
+
+                // 移除正在输入
+                removeTyping(typingId);
+
+                if (!res.ok) {
+                    appendMessage('assistant', '抱歉，服务暂时不可用，请稍后再试。');
+                    return;
+                }
+
+                const data = await res.json();
+
+                // 显示助手回复
+                appendMessage('assistant', data.reply);
+
+                // 添加到历史
+                agentChatHistory.push({ role: 'assistant', content: data.reply });
+
+                // 处理特殊动作
+                if (data.action === 'show_product_form' && data.data) {
+                    showAgentProductForm(data.data);
+                }
+
+            } catch (err) {
+                removeTyping(typingId);
+                appendMessage('assistant', '网络错误，请稍后再试。');
+            }
+
+            document.getElementById('agentSendBtn').disabled = false;
+        }
+
+        function appendMessage(role, content) {
+            const container = document.getElementById('agentChatMessages');
+            const avatar = role === 'user' ? '我' : '助';
+            const html = `
+                <div class="message ${role}">
+                    <div class="message-avatar">${avatar}</div>
+                    <div class="message-content">${escapeHTML(content).replace(/\n/g, '<br>')}</div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showTyping() {
+            const container = document.getElementById('agentChatMessages');
+            const id = 'typing-' + Date.now();
+            const html = `
+                <div class="message assistant" id="${id}">
+                    <div class="message-avatar">助</div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeTyping(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function showAgentProductForm(data) {
+            agentProductData = data;
+            document.getElementById('agentProductName').value = data.name || '';
+            document.getElementById('agentProductPrice').value = data.price || '';
+            document.getElementById('agentProductDesc').value = data.description || '';
+            document.getElementById('agentProductStock').value = data.stock || 100;
+
+            // 设置分类
+            const categorySelect = document.getElementById('agentProductCategory');
+            const categoryMap = {'手机':6,'电脑':7,'平板':8,'耳机':9,'智能手表':10,'相机':11,
+                                '服装':12,'鞋靴':13,'箱包':14,'美妆':15,'食品':16,'家居':17,
+                                '家电':18,'母婴':19,'运动':20,'图书':21};
+            if (data.category && categoryMap[data.category]) {
+                categorySelect.value = categoryMap[data.category];
+            }
+
+            document.getElementById('agentProductForm').style.display = 'block';
+        }
+
+        function hideAgentProductForm() {
+            document.getElementById('agentProductForm').style.display = 'none';
+            agentProductData = null;
+        }
+
+        async function confirmAgentProduct() {
+            const productData = {
+                name: document.getElementById('agentProductName').value,
+                price: parseFloat(document.getElementById('agentProductPrice').value),
+                category_id: parseInt(document.getElementById('agentProductCategory').value),
+                description: document.getElementById('agentProductDesc').value,
+                stock: parseInt(document.getElementById('agentProductStock').value) || 100
+            };
+
+            try {
+                const res = await fetch(`${API_BASE}/api/merchant/agent/confirm-product`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify(productData)
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    appendMessage('assistant', `商品「${productData.name}」添加成功！商品ID: ${result.product_id}`);
+                    hideAgentProductForm();
+                    loadProducts(); // 刷新商品列表
+                    loadDashboard(); // 刷新数据
+                } else {
+                    appendMessage('assistant', '添加失败，请重试。');
+                }
+            } catch (err) {
+                appendMessage('assistant', '网络错误，请稍后再试。');
+            }
+        }
+
+        // Enter发送，Shift+Enter换行
+        document.getElementById('agentInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAgentMessage();
+            }
+        });
 
         // 启动
         init();

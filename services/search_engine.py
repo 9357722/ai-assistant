@@ -57,6 +57,22 @@ BRAND_NAME_MAP = {
     "三星": ["三星", "samsung", "galaxy"],
     "索尼": ["索尼", "sony"],
     "佳能": ["佳能", "canon"],
+    "耐克": ["nike", "耐克"],
+    "阿迪达斯": ["adidas", "阿迪达斯"],
+    "优衣库": ["优衣库", "uniqlo"],
+    "李宁": ["李宁", "lining"],
+    "安踏": ["安踏", "anta"],
+    "戴尔": ["dell", "戴尔"],
+    "联想": ["联想", "lenovo", "thinkpad"],
+    "惠普": ["hp", "惠普"],
+    "华硕": ["华硕", "asus"],
+    "戴森": ["dyson", "戴森"],
+    "格力": ["格力", "gree"],
+    "美的": ["美的", "midea"],
+    "海尔": ["海尔", "haier"],
+    "兰蔻": ["lancome", "兰蔻"],
+    "雅诗兰黛": ["雅诗兰黛", "esteelauder"],
+    "SK-II": ["skii", "sk-ii"],
 }
 
 
@@ -247,7 +263,14 @@ class SearchEngine:
         async with self.pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cur:
                 # --- 路径1: 文本召回 ---
-                for kw in intent.get("keywords", []):
+                # 收集所有搜索词（包括品牌别名）
+                search_terms = list(intent.get("keywords", []))
+                if intent.get("brand"):
+                    brand = intent["brand"]
+                    brand_aliases = BRAND_NAME_MAP.get(brand, [brand])
+                    search_terms.extend(brand_aliases)
+
+                for kw in search_terms:
                     await cur.execute("""
                         SELECT p.*, c.name as category_name
                         FROM products p
@@ -291,22 +314,24 @@ class SearchEngine:
                 # --- 路径3: 品牌召回 ---
                 if intent.get("brand"):
                     brand = intent["brand"]
-                    await cur.execute("""
-                        SELECT p.*, c.name as category_name
-                        FROM products p
-                        LEFT JOIN categories c ON p.category_id = c.id
-                        WHERE p.status = 'on_sale'
-                          AND p.name LIKE %s
-                        ORDER BY p.sales DESC
-                        LIMIT 20
-                    """, (f"%{brand}%",))
-                    for row in await cur.fetchall():
-                        pid = row["id"]
-                        if pid not in candidates:
-                            row["_recall_source"] = "brand"
-                            row["_match_score"] = 0
-                            candidates[pid] = row
-                        candidates[pid]["_match_score"] += 2  # 品牌命中加分
+                    brand_aliases = BRAND_NAME_MAP.get(brand, [brand])
+                    for alias in brand_aliases:
+                        await cur.execute("""
+                            SELECT p.*, c.name as category_name
+                            FROM products p
+                            LEFT JOIN categories c ON p.category_id = c.id
+                            WHERE p.status = 'on_sale'
+                              AND p.name LIKE %s
+                            ORDER BY p.sales DESC
+                            LIMIT 20
+                        """, (f"%{alias}%",))
+                        for row in await cur.fetchall():
+                            pid = row["id"]
+                            if pid not in candidates:
+                                row["_recall_source"] = "brand"
+                                row["_match_score"] = 0
+                                candidates[pid] = row
+                            candidates[pid]["_match_score"] += 2  # 品牌命中加分
 
         return list(candidates.values())
 

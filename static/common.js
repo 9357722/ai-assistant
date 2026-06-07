@@ -1,9 +1,7 @@
 /**
  * 公共工具函数
  */
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? ''  // 本地开发：同源
-    : 'http://120.55.95.8:8000';  // 服务器：指向 API 端口
+const API_BASE = '';
 
 // XSS 防护：转义 HTML 特殊字符
 function escapeHTML(str) {
@@ -51,11 +49,11 @@ function isLoggedIn() {
 function injectMobileTabBar() {
     const currentPath = window.location.pathname;
     const tabs = [
-        { href: '/', icon: '🏠', label: '首页', match: '/' },
-        { href: '/product.html', icon: '🛍️', label: '商品', match: '/product.html' },
-        { href: '/cart.html', icon: '🛒', label: '购物车', match: '/cart.html' },
-        { href: '/orders.html', icon: '📦', label: '订单', match: '/orders.html' },
-        { href: '/user.html', icon: '👤', label: '我的', match: '/user.html' },
+        { href: '/', icon: 'H', label: '首页', match: '/' },
+        { href: '/product.html', icon: 'S', label: '商品', match: '/product.html' },
+        { href: '/cart.html', icon: 'C', label: '购物车', match: '/cart.html' },
+        { href: '/orders.html', icon: 'O', label: '订单', match: '/orders.html' },
+        { href: '/user.html', icon: 'U', label: '我的', match: '/user.html' },
     ];
 
     const css = document.createElement('style');

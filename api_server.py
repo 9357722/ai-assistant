@@ -134,11 +134,12 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     客户端通过 ws://host/ws/{jwt_token} 连接
     """
     # 验证 token
-    payload = decode_token(token)
-    if not payload:
+    try:
+        payload = decode_token(token)
+    except Exception:
         await websocket.close(code=4001, reason="无效的 token")
         return
-    user_id = payload.get("user_id")
+    user_id = payload.user_id
     if not user_id:
         await websocket.close(code=4001, reason="token 中缺少 user_id")
         return

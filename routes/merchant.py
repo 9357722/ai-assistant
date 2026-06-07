@@ -310,3 +310,65 @@ async def create_coupon(data: CouponCreate, user=Depends(get_current_user), db=D
 
     coupon_id = await service.create_coupon(merchant['id'], data.dict())
     return {"message": "优惠券创建成功", "coupon_id": coupon_id}
+
+
+# ================================================================
+# 智能助手 Agent 接口
+# ================================================================
+
+class AgentChat(BaseModel):
+    message: str
+    context: Optional[list] = None
+
+
+@router.post("/agent/chat")
+async def agent_chat(data: AgentChat, user=Depends(get_current_user), db=Depends(get_db)):
+    """与商家智能助手对话"""
+    from services.merchant_service import MerchantService
+    from services.merchant_agent import MerchantAgent
+
+    service = MerchantService(db)
+    merchant = await service.get_merchant_by_user_id(user.user_id)
+    if not merchant:
+        raise HTTPException(status_code=403, detail="您不是商家")
+
+    agent = MerchantAgent(db)
+    result = await agent.chat(merchant['id'], data.message, data.context)
+    return result
+
+
+@router.post("/agent/generate-product")
+async def agent_generate_product(data: dict, user=Depends(get_current_user), db=Depends(get_db)):
+    """AI生成商品信息"""
+    from services.merchant_service import MerchantService
+    from services.merchant_agent import MerchantAgent
+
+    service = MerchantService(db)
+    merchant = await service.get_merchant_by_user_id(user.user_id)
+    if not merchant:
+        raise HTTPException(status_code=403, detail="您不是商家")
+
+    name = data.get('name', '')
+    price = data.get('price', 0)
+    category = data.get('category', '')
+
+    agent = MerchantAgent(db)
+    product_info = await agent._generate_product_info({
+        'name': name,
+        'price': price,
+        'category': category
+    })
+    return product_info
+
+
+@router.post("/agent/confirm-product")
+async def agent_confirm_product(data: ProductCreate, user=Depends(get_current_user), db=Depends(get_db)):
+    """确认添加AI生成的商品"""
+    from services.merchant_service import MerchantService
+    service = MerchantService(db)
+    merchant = await service.get_merchant_by_user_id(user.user_id)
+    if not merchant:
+        raise HTTPException(status_code=403, detail="您不是商家")
+
+    product_id = await service.add_product_to_merchant(merchant['id'], data.dict())
+    return {"message": "商品添加成功", "product_id": product_id}

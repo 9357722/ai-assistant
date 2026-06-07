@@ -301,7 +301,7 @@
         function renderOrderCard(order) {
             const itemsHtml = order.items.map(item => `
                 <div class="order-item">
-                    <div class="item-image"><img src="/static/products/product_${item.product_id}.jpg" alt="${escapeHTML(item.product_name)}" loading="lazy"></div>
+                    <div class="item-image"><img src="${item.product_image || '/static/products/product_' + item.product_id + '.jpg'}" alt="${escapeHTML(item.product_name)}" loading="lazy"></div>
                     <div class="item-info">
                         <div class="item-name">${escapeHTML(item.product_name)}</div>
                         <div class="item-spec">x${item.quantity}</div>

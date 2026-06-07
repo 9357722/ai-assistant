@@ -680,7 +680,7 @@
                 if (data.items && data.items.length > 0) {
                     container.innerHTML = data.items.map(p => `
                         <div class="product-card" onclick="showProductDetail(${p.id})">
-                            <div class="product-image"><img src="/static/products/product_${p.id}.jpg" alt="${escapeHTML(p.name)}" loading="lazy"></div>
+                            <div class="product-image"><img src="${p.main_image || '/static/products/product_' + p.id + '.jpg'}" alt="${escapeHTML(p.name)}" loading="lazy"></div>
                             <div class="product-info">
                                 <div class="product-name">${escapeHTML(p.name)}</div>
                                 <div class="product-price">¥${p.price}</div>
@@ -750,7 +750,8 @@
             try {
                 const res = await fetch(`${API_BASE}/api/products/${productId}`);
                 currentProduct = await res.json();
-                document.getElementById('detailImage').innerHTML = `<img src="/static/products/product_${currentProduct.id}.jpg" alt="${escapeHTML(currentProduct.name)}">`;
+                const imgSrc = currentProduct.main_image || '/static/products/product_' + currentProduct.id + '.jpg';
+                document.getElementById('detailImage').innerHTML = `<img src="${imgSrc}" alt="${escapeHTML(currentProduct.name)}">`;
                 document.getElementById('detailTitle').textContent = currentProduct.name;
                 document.getElementById('detailPrice').textContent = `¥${currentProduct.price}`;
                 document.getElementById('detailMeta').innerHTML = `
@@ -797,7 +798,7 @@
                 if (data.recommendations && data.recommendations.length > 0) {
                     container.innerHTML = data.recommendations.slice(0, 4).map(p => `
                         <div class="product-card" onclick="showProductDetail(${p.id})">
-                            <div class="product-image"><img src="/static/products/product_${p.id}.jpg" alt="${escapeHTML(p.name)}" loading="lazy"></div>
+                            <div class="product-image"><img src="${p.main_image || '/static/products/product_' + p.id + '.jpg'}" alt="${escapeHTML(p.name)}" loading="lazy"></div>
                             <div class="product-info">
                                 <div class="product-name">${escapeHTML(p.name)}</div>
                                 <div class="product-price">¥${p.price}</div>

@@ -1316,7 +1316,7 @@
 
             tbody.innerHTML = products.map(p => `
                 <tr>
-                    <td><img src="/static/products/product_${p.id}.jpg" style="width:60px;height:60px;object-fit:cover;border-radius:4px;"></td>
+                    <td><img src="${p.main_image || '/static/products/product_' + p.id + '.jpg'}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;"></td>
                     <td>${escapeHTML(p.name)}</td>
                     <td>¥${p.price}</td>
                     <td>${p.stock}</td>

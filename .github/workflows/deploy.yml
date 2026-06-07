@@ -24,3 +24,18 @@ jobs:
           git pull origin main
           docker compose down
           docker compose up -d --build
+          sleep 10
+          docker exec ai-assistant python -c "
+          import pymysql, os
+          conn = pymysql.connect(host='host.docker.internal', user='root', password='108045', db='product_db')
+          cur = conn.cursor()
+          imgs = sorted([f for f in os.listdir('/app/static/products') if f.startswith('product_') and f.endswith('.jpg')])
+          cur.execute('SELECT id FROM products ORDER BY id')
+          ids = [r[0] for r in cur.fetchall()]
+          for i, pid in enumerate(ids):
+              if i < len(imgs):
+                  cur.execute('UPDATE products SET main_image = %s WHERE id = %s', (f'/static/products/{imgs[i]}', pid))
+          conn.commit()
+          conn.close()
+          print('Database updated')
+          "

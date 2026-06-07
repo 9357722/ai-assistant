@@ -1,13 +1,20 @@
 services:
   api:
+    build: .
     image: ai-assistant:slim
     container_name: ai-assistant
     restart: always
     ports:
       - "8000:8000"
     environment:
+      DB_HOST: host.docker.internal
+      DB_PASSWORD: ${DB_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       OPENAI_API_KEY: ${DEEPSEEK_API_KEY}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY}
+      REDIS_HOST: host.docker.internal
+      REDIS_PORT: 6379
+      REDIS_DB: 0
     extra_hosts:
       - "host.docker.internal:host-gateway"

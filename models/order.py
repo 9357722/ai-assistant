@@ -14,6 +14,7 @@ class OrderCreate(BaseModel):
     address_id: int = Field(..., description="收货地址ID")
     remark: Optional[str] = Field(None, max_length=500, description="备注")
     cart_item_ids: Optional[List[int]] = Field(None, description="购物车项ID列表，为空则使用所有选中项")
+    idempotency_key: Optional[str] = Field(None, max_length=64, description="幂等键，防止重复提交")
 
 
 class OrderQuery(BaseModel):

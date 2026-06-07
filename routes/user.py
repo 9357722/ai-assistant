@@ -18,6 +18,7 @@ from auth import (
     create_access_token,
     get_current_user,
     get_current_admin,
+    decode_token_allow_expired,
     TokenData,
 )
 from models.user import (
@@ -90,34 +91,47 @@ async def register(user_data: UserCreate, db=Depends(get_db)):
             return UserResponse(**user)
 
 
-# ============ 登录限流（Redis 滑动窗口，Redis 不可用时降级） ============
+# ============ 登录限流（Redis 滑动窗口 + 内存降级） ============
 _LOGIN_MAX_ATTEMPTS = 10
 _LOGIN_WINDOW = 300  # 5 分钟
+_login_memory: dict = {}  # {ip: [timestamp, ...]} — Redis 不可用时的降级方案
 
 def _check_login_rate_limit(ip: str):
     """检查登录频率，超过限制抛出 429"""
     try:
         from services.cache import get_redis
         r = get_redis()
-        if r is None:
-            return  # Redis 不可用时跳过限流
-        key = f"login_limit:{ip}"
-        now = time.time()
-        pipe = r.pipeline()
-        pipe.zremrangebyscore(key, 0, now - _LOGIN_WINDOW)
-        pipe.zadd(key, {str(now): now})
-        pipe.zcard(key)
-        pipe.expire(key, _LOGIN_WINDOW)
-        _, _, count, _ = pipe.execute()
-        if count > _LOGIN_MAX_ATTEMPTS:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"登录尝试过于频繁，请稍后再试"
-            )
+        if r is not None:
+            key = f"login_limit:{ip}"
+            now = time.time()
+            pipe = r.pipeline()
+            pipe.zremrangebyscore(key, 0, now - _LOGIN_WINDOW)
+            pipe.zadd(key, {str(now): now})
+            pipe.zcard(key)
+            pipe.expire(key, _LOGIN_WINDOW)
+            _, _, count, _ = pipe.execute()
+            if count > _LOGIN_MAX_ATTEMPTS:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="登录尝试过于频繁，请稍后再试"
+                )
+            return
     except HTTPException:
         raise
     except Exception:
-        pass  # Redis 不可用时不限流
+        pass
+
+    # Redis 不可用，降级为内存限流
+    now = time.time()
+    timestamps = _login_memory.get(ip, [])
+    timestamps = [t for t in timestamps if now - t < _LOGIN_WINDOW]
+    timestamps.append(now)
+    _login_memory[ip] = timestamps
+    if len(timestamps) > _LOGIN_MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="登录尝试过于频繁，请稍后再试"
+        )
 
 # ============ 用户登录 ============
 
@@ -195,6 +209,66 @@ async def login(login_data: UserLogin, request: Request, db=Depends(get_db)):
                     updated_at=user.get("updated_at"),
                 )
             )
+
+
+# ============ Token 刷新 ============
+
+@router.post("/refresh", response_model=UserLoginResponse)
+async def refresh_token(
+    request: Request,
+    db=Depends(get_db),
+):
+    """
+    刷新 Token
+
+    - 接收当前 Token（即使已过期）
+    - 验证用户仍然有效
+    - 返回新 Token
+    """
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="缺少认证凭据")
+
+    old_token = auth_header[7:]
+    token_data = decode_token_allow_expired(old_token)
+
+    if not token_data.user_id:
+        raise HTTPException(status_code=401, detail="无效的 Token")
+
+    # 验证用户仍然存在且有效
+    async with db.acquire() as conn:
+        async with conn.cursor(aiomysql.DictCursor) as cur:
+            await cur.execute(
+                "SELECT id, username, email, phone, avatar, role, is_active, created_at, updated_at FROM users WHERE id = %s",
+                (token_data.user_id,)
+            )
+            user = await cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=401, detail="用户不存在")
+            if not user["is_active"]:
+                raise HTTPException(status_code=403, detail="账号已被禁用")
+
+    # 生成新 Token
+    new_token = create_access_token({
+        "user_id": user["id"],
+        "username": user["username"],
+        "role": user["role"],
+    })
+
+    return UserLoginResponse(
+        access_token=new_token,
+        user=UserResponse(
+            id=user["id"],
+            username=user["username"],
+            email=user["email"],
+            phone=user["phone"],
+            avatar=user["avatar"],
+            role=user["role"],
+            is_active=user["is_active"],
+            created_at=user["created_at"],
+            updated_at=user.get("updated_at"),
+        )
+    )
 
 
 # ============ 获取当前用户信息 ============

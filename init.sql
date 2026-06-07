@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS orders (
     status ENUM('pending', 'paid', 'shipped', 'completed', 'cancelled') DEFAULT 'pending',
     address_snapshot JSON,
     remark VARCHAR(500),
+    idempotency_key VARCHAR(64),
     paid_at TIMESTAMP NULL,
     shipped_at TIMESTAMP NULL,
     completed_at TIMESTAMP NULL,
@@ -118,7 +119,8 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_user_status (user_id, status),
-    INDEX idx_created (created_at)
+    INDEX idx_created (created_at),
+    UNIQUE INDEX idx_idempotency (idempotency_key, user_id)
 );
 
 -- 订单项表

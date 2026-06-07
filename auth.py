@@ -61,6 +61,34 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
+def decode_token_allow_expired(token: str) -> TokenData:
+    """
+    解码 JWT Token（允许过期，用于 Token 刷新）
+
+    仅提取 user_id/username/role，不校验 exp
+    """
+    try:
+        payload = jwt.decode(
+            token, config.SECRET_KEY,
+            algorithms=[config.ALGORITHM],
+            options={"verify_exp": False},
+        )
+        user_id: int = payload.get("user_id")
+        username: str = payload.get("username")
+        role: str = payload.get("role")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="无效的认证凭据",
+            )
+        return TokenData(user_id=user_id, username=username, role=role)
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token 无效",
+        )
+
+
 def decode_token(token: str) -> TokenData:
     """
     解码 JWT Token

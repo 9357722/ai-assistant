@@ -57,6 +57,21 @@ async def create_order(
             # 开启事务：关闭 autocommit，保证扣库存+建订单+清购物车原子性
             await conn.begin()
             try:
+                # 幂等性校验：如果提供了幂等键，检查是否已存在
+                if order_data.idempotency_key:
+                    await cur.execute(
+                        "SELECT id, order_no FROM orders WHERE idempotency_key = %s AND user_id = %s",
+                        (order_data.idempotency_key, current_user.user_id)
+                    )
+                    existing_order = await cur.fetchone()
+                    if existing_order:
+                        # 已存在，返回已有订单（幂等）
+                        await conn.rollback()
+                        raise HTTPException(
+                            status_code=status.HTTP_200_OK,
+                            detail=f"订单已存在: {existing_order['order_no']}"
+                        )
+
                 # 获取收货地址
                 await cur.execute(
                     "SELECT * FROM user_addresses WHERE id = %s AND user_id = %s",
@@ -66,7 +81,7 @@ async def create_order(
                 if not address:
                     raise HTTPException(status_code=404, detail="收货地址不存在")
 
-                # 获取购物车项
+                # 获取购物车项（使用 FOR UPDATE 行级锁，防止并发超卖）
                 if order_data.cart_item_ids:
                     placeholders = ",".join(["%s"] * len(order_data.cart_item_ids))
                     sql = f"""
@@ -89,6 +104,15 @@ async def create_order(
 
                 await cur.execute(sql, params)
                 cart_items = await cur.fetchall()
+
+                # 锁定商品行，防止并发扣减
+                product_ids = [item["product_id"] for item in cart_items] if cart_items else []
+                if product_ids:
+                    placeholders = ",".join(["%s"] * len(product_ids))
+                    await cur.execute(
+                        f"SELECT id, stock FROM products WHERE id IN ({placeholders}) FOR UPDATE",
+                        product_ids
+                    )
 
                 if not cart_items:
                     raise HTTPException(status_code=400, detail="没有选中的商品")
@@ -119,10 +143,11 @@ async def create_order(
 
                 # 创建订单
                 await cur.execute(
-                    """INSERT INTO orders (order_no, user_id, total_amount, pay_amount, status, address_snapshot, remark)
-                       VALUES (%s, %s, %s, %s, 'pending', %s, %s)""",
+                    """INSERT INTO orders (order_no, user_id, total_amount, pay_amount, status, address_snapshot, remark, idempotency_key)
+                       VALUES (%s, %s, %s, %s, 'pending', %s, %s, %s)""",
                     (order_no, current_user.user_id, total_amount, total_amount,
-                     json.dumps(address_snapshot, ensure_ascii=False), order_data.remark)
+                     json.dumps(address_snapshot, ensure_ascii=False), order_data.remark,
+                     order_data.idempotency_key)
                 )
                 order_id = cur.lastrowid
 

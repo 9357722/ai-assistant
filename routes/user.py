@@ -151,7 +151,6 @@ async def login(login_data: UserLogin, request: Request, db=Depends(get_db)):
 
             if not user:
                 logger.info("User not found")
-                _login_attempts[client_ip].append(time.time())
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="用户名或密码错误",
@@ -163,7 +162,6 @@ async def login(login_data: UserLogin, request: Request, db=Depends(get_db)):
             logger.info(f"Password valid: {password_valid}")
 
             if not password_valid:
-                _login_attempts[client_ip].append(time.time())
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="用户名或密码错误",

@@ -56,6 +56,7 @@ app.add_middleware(
         "http://120.55.95.8:8000",
         "https://physiology-handle-albuquerque-collect.trycloudflare.com",
         "https://serial-helping-aruba-star.trycloudflare.com",
+        "https://improvement-chef-goat-advanced.trycloudflare.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],

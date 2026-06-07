@@ -1,0 +1,296 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "💬 惠购商城 智能电商导购平台" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: 💬
+        - generic [ref=e6]:
+          - generic [ref=e7]: 惠购商城
+          - generic [ref=e8]: 智能电商导购平台
+      - generic [ref=e9]:
+        - generic: 🔍
+        - textbox "搜索商品..." [ref=e10]
+      - navigation [ref=e11]:
+        - link "首页" [ref=e12] [cursor=pointer]:
+          - /url: /
+        - link "🛒 购物车" [ref=e13] [cursor=pointer]:
+          - /url: /cart.html
+        - link "订单" [ref=e14] [cursor=pointer]:
+          - /url: /orders.html
+        - link "AI 助手" [ref=e15] [cursor=pointer]:
+          - /url: /chat.html
+        - button "登录" [ref=e16] [cursor=pointer]
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]:
+        - heading "商品分类" [level=3] [ref=e20]
+        - generic [ref=e21]:
+          - generic [ref=e22] [cursor=pointer]:
+            - radio "全部分类" [checked] [ref=e23]
+            - text: 全部分类
+          - generic [ref=e24] [cursor=pointer]:
+            - radio "手机" [ref=e25]
+            - text: 手机
+          - generic [ref=e26] [cursor=pointer]:
+            - radio "电脑" [ref=e27]
+            - text: 电脑
+          - generic [ref=e28] [cursor=pointer]:
+            - radio "平板" [ref=e29]
+            - text: 平板
+          - generic [ref=e30] [cursor=pointer]:
+            - radio "耳机" [ref=e31]
+            - text: 耳机
+          - generic [ref=e32] [cursor=pointer]:
+            - radio "智能手表" [ref=e33]
+            - text: 智能手表
+          - generic [ref=e34] [cursor=pointer]:
+            - radio "相机" [ref=e35]
+            - text: 相机
+          - generic [ref=e36] [cursor=pointer]:
+            - radio "服装" [ref=e37]
+            - text: 服装
+          - generic [ref=e38] [cursor=pointer]:
+            - radio "鞋靴" [ref=e39]
+            - text: 鞋靴
+          - generic [ref=e40] [cursor=pointer]:
+            - radio "箱包" [ref=e41]
+            - text: 箱包
+          - generic [ref=e42] [cursor=pointer]:
+            - radio "美妆" [ref=e43]
+            - text: 美妆
+          - generic [ref=e44] [cursor=pointer]:
+            - radio "食品" [ref=e45]
+            - text: 食品
+          - generic [ref=e46] [cursor=pointer]:
+            - radio "家居" [ref=e47]
+            - text: 家居
+          - generic [ref=e48] [cursor=pointer]:
+            - radio "家电" [ref=e49]
+            - text: 家电
+          - generic [ref=e50] [cursor=pointer]:
+            - radio "母婴" [ref=e51]
+            - text: 母婴
+          - generic [ref=e52] [cursor=pointer]:
+            - radio "运动" [ref=e53]
+            - text: 运动
+          - generic [ref=e54] [cursor=pointer]:
+            - radio "图书" [ref=e55]
+            - text: 图书
+      - generic [ref=e56]:
+        - heading "价格区间" [level=3] [ref=e57]
+        - generic [ref=e58]:
+          - generic [ref=e59] [cursor=pointer]:
+            - radio "不限" [checked] [ref=e60]
+            - text: 不限
+          - generic [ref=e61] [cursor=pointer]:
+            - radio "0 - 1000元" [ref=e62]
+            - text: 0 - 1000元
+          - generic [ref=e63] [cursor=pointer]:
+            - radio "1000 - 3000元" [ref=e64]
+            - text: 1000 - 3000元
+          - generic [ref=e65] [cursor=pointer]:
+            - radio "3000 - 5000元" [ref=e66]
+            - text: 3000 - 5000元
+          - generic [ref=e67] [cursor=pointer]:
+            - radio "5000 - 10000元" [ref=e68]
+            - text: 5000 - 10000元
+          - generic [ref=e69] [cursor=pointer]:
+            - radio "10000元以上" [ref=e70]
+            - text: 10000元以上
+          - generic [ref=e71]:
+            - spinbutton [ref=e72]
+            - generic [ref=e73]: "-"
+            - spinbutton [ref=e74]
+        - button "筛选" [ref=e75] [cursor=pointer]
+      - generic [ref=e76]:
+        - heading "平台" [level=3] [ref=e77]
+        - generic [ref=e78]:
+          - generic [ref=e79] [cursor=pointer]:
+            - radio "全部平台" [checked] [ref=e80]
+            - text: 全部平台
+          - generic [ref=e81] [cursor=pointer]:
+            - radio "京东" [ref=e82]
+            - text: 京东
+          - generic [ref=e83] [cursor=pointer]:
+            - radio "淘宝" [ref=e84]
+            - text: 淘宝
+          - generic [ref=e85] [cursor=pointer]:
+            - radio "拼多多" [ref=e86]
+            - text: 拼多多
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - heading "全部商品" [level=2] [ref=e89]
+        - generic [ref=e90]:
+          - button "综合排序" [ref=e91] [cursor=pointer]
+          - button "价格↑" [ref=e92] [cursor=pointer]
+          - button "价格↓" [ref=e93] [cursor=pointer]
+          - button "销量↓" [ref=e94] [cursor=pointer]
+          - button "评分↓" [ref=e95] [cursor=pointer]
+      - generic [ref=e96]:
+        - generic [ref=e97] [cursor=pointer]:
+          - img "iPhone 15 Pro Max 256GB 原色钛金属" [ref=e99]
+          - generic [ref=e100]:
+            - generic [ref=e101]: iPhone 15 Pro Max 256GB 原色钛金属
+            - generic [ref=e102]: ¥9999
+            - generic [ref=e103]:
+              - generic [ref=e104]: ★ 4.9
+              - generic [ref=e105]: 2人付款
+        - generic [ref=e106] [cursor=pointer]:
+          - img "iPhone 15 Pro 128GB 黑色钛金属" [ref=e108]
+          - generic [ref=e109]:
+            - generic [ref=e110]: iPhone 15 Pro 128GB 黑色钛金属
+            - generic [ref=e111]: ¥7999
+            - generic [ref=e112]:
+              - generic [ref=e113]: ★ 4.8
+              - generic [ref=e114]: 4人付款
+        - generic [ref=e115] [cursor=pointer]:
+          - img "iPhone 15 128GB 粉色" [ref=e117]
+          - generic [ref=e118]:
+            - generic [ref=e119]: iPhone 15 128GB 粉色
+            - generic [ref=e120]: ¥5999
+            - generic [ref=e121]:
+              - generic [ref=e122]: ★ 4.7
+              - generic [ref=e123]: 0人付款
+        - generic [ref=e124] [cursor=pointer]:
+          - img "华为Mate 60 Pro 512GB 雅丹黑" [ref=e126]
+          - generic [ref=e127]:
+            - generic [ref=e128]: 华为Mate 60 Pro 512GB 雅丹黑
+            - generic [ref=e129]: ¥6999
+            - generic [ref=e130]:
+              - generic [ref=e131]: ★ 4.8
+              - generic [ref=e132]: 0人付款
+        - generic [ref=e133] [cursor=pointer]:
+          - img "华为Mate 60 256GB 雅川青" [ref=e135]
+          - generic [ref=e136]:
+            - generic [ref=e137]: 华为Mate 60 256GB 雅川青
+            - generic [ref=e138]: ¥5499
+            - generic [ref=e139]:
+              - generic [ref=e140]: ★ 4.7
+              - generic [ref=e141]: 0人付款
+        - generic [ref=e142] [cursor=pointer]:
+          - img "小米14 Pro 256GB 黑色" [ref=e144]
+          - generic [ref=e145]:
+            - generic [ref=e146]: 小米14 Pro 256GB 黑色
+            - generic [ref=e147]: ¥4999
+            - generic [ref=e148]:
+              - generic [ref=e149]: ★ 4.6
+              - generic [ref=e150]: 0人付款
+        - generic [ref=e151] [cursor=pointer]:
+          - img "小米14 256GB 白色" [ref=e153]
+          - generic [ref=e154]:
+            - generic [ref=e155]: 小米14 256GB 白色
+            - generic [ref=e156]: ¥3999
+            - generic [ref=e157]:
+              - generic [ref=e158]: ★ 4.5
+              - generic [ref=e159]: 0人付款
+        - generic [ref=e160] [cursor=pointer]:
+          - img "Redmi K70 Pro 256GB 墨羽" [ref=e162]
+          - generic [ref=e163]:
+            - generic [ref=e164]: Redmi K70 Pro 256GB 墨羽
+            - generic [ref=e165]: ¥3299
+            - generic [ref=e166]:
+              - generic [ref=e167]: ★ 4.5
+              - generic [ref=e168]: 0人付款
+        - generic [ref=e169] [cursor=pointer]:
+          - img "Redmi K70 256GB 晴雪" [ref=e171]
+          - generic [ref=e172]:
+            - generic [ref=e173]: Redmi K70 256GB 晴雪
+            - generic [ref=e174]: ¥2499
+            - generic [ref=e175]:
+              - generic [ref=e176]: ★ 4.4
+              - generic [ref=e177]: 0人付款
+        - generic [ref=e178] [cursor=pointer]:
+          - img "OPPO Find X7 Ultra 512GB" [ref=e180]
+          - generic [ref=e181]:
+            - generic [ref=e182]: OPPO Find X7 Ultra 512GB
+            - generic [ref=e183]: ¥5999
+            - generic [ref=e184]:
+              - generic [ref=e185]: ★ 4.7
+              - generic [ref=e186]: 0人付款
+        - generic [ref=e187] [cursor=pointer]:
+          - img "vivo X100 Pro 512GB 落日橙" [ref=e189]
+          - generic [ref=e190]:
+            - generic [ref=e191]: vivo X100 Pro 512GB 落日橙
+            - generic [ref=e192]: ¥4999
+            - generic [ref=e193]:
+              - generic [ref=e194]: ★ 4.6
+              - generic [ref=e195]: 0人付款
+        - generic [ref=e196] [cursor=pointer]:
+          - img "一加12 512GB 留白" [ref=e198]
+          - generic [ref=e199]:
+            - generic [ref=e200]: 一加12 512GB 留白
+            - generic [ref=e201]: ¥4299
+            - generic [ref=e202]:
+              - generic [ref=e203]: ★ 4.6
+              - generic [ref=e204]: 0人付款
+        - generic [ref=e205] [cursor=pointer]:
+          - img "三星Galaxy S24 Ultra 256GB" [ref=e207]
+          - generic [ref=e208]:
+            - generic [ref=e209]: 三星Galaxy S24 Ultra 256GB
+            - generic [ref=e210]: ¥9699
+            - generic [ref=e211]:
+              - generic [ref=e212]: ★ 4.7
+              - generic [ref=e213]: 0人付款
+        - generic [ref=e214] [cursor=pointer]:
+          - img "荣耀Magic6 Pro 256GB 黑色" [ref=e216]
+          - generic [ref=e217]:
+            - generic [ref=e218]: 荣耀Magic6 Pro 256GB 黑色
+            - generic [ref=e219]: ¥4999
+            - generic [ref=e220]:
+              - generic [ref=e221]: ★ 4.6
+              - generic [ref=e222]: 0人付款
+        - generic [ref=e223] [cursor=pointer]:
+          - img "MacBook Pro 14 M3 Pro 18GB+512GB" [ref=e225]
+          - generic [ref=e226]:
+            - generic [ref=e227]: MacBook Pro 14 M3 Pro 18GB+512GB
+            - generic [ref=e228]: ¥16999
+            - generic [ref=e229]:
+              - generic [ref=e230]: ★ 4.9
+              - generic [ref=e231]: 0人付款
+        - generic [ref=e232] [cursor=pointer]:
+          - img "MacBook Air 15 M3 16GB+512GB" [ref=e234]
+          - generic [ref=e235]:
+            - generic [ref=e236]: MacBook Air 15 M3 16GB+512GB
+            - generic [ref=e237]: ¥12999
+            - generic [ref=e238]:
+              - generic [ref=e239]: ★ 4.8
+              - generic [ref=e240]: 0人付款
+        - generic [ref=e241] [cursor=pointer]:
+          - img "ThinkPad X1 Carbon 2024 i7/16GB" [ref=e243]
+          - generic [ref=e244]:
+            - generic [ref=e245]: ThinkPad X1 Carbon 2024 i7/16GB
+            - generic [ref=e246]: ¥11999
+            - generic [ref=e247]:
+              - generic [ref=e248]: ★ 4.7
+              - generic [ref=e249]: 0人付款
+        - generic [ref=e250] [cursor=pointer]:
+          - img "联想小新Pro16 2024 R7/16GB/512GB" [ref=e252]
+          - generic [ref=e253]:
+            - generic [ref=e254]: 联想小新Pro16 2024 R7/16GB/512GB
+            - generic [ref=e255]: ¥5499
+            - generic [ref=e256]:
+              - generic [ref=e257]: ★ 4.5
+              - generic [ref=e258]: 0人付款
+        - generic [ref=e259] [cursor=pointer]:
+          - img "华为MateBook X Pro i7/16GB/1TB" [ref=e261]
+          - generic [ref=e262]:
+            - generic [ref=e263]: 华为MateBook X Pro i7/16GB/1TB
+            - generic [ref=e264]: ¥11999
+            - generic [ref=e265]:
+              - generic [ref=e266]: ★ 4.8
+              - generic [ref=e267]: 0人付款
+        - generic [ref=e268] [cursor=pointer]:
+          - img "华硕天选5 Pro i9/RTX4060/16GB" [ref=e270]
+          - generic [ref=e271]:
+            - generic [ref=e272]: 华硕天选5 Pro i9/RTX4060/16GB
+            - generic [ref=e273]: ¥8999
+            - generic [ref=e274]:
+              - generic [ref=e275]: ★ 4.6
+              - generic [ref=e276]: 0人付款
+      - generic [ref=e277]:
+        - button "1" [ref=e278] [cursor=pointer]
+        - button "2" [ref=e279] [cursor=pointer]
+        - button "3" [ref=e280] [cursor=pointer]
+        - button "4" [ref=e281] [cursor=pointer]
+        - button "下一页" [ref=e282] [cursor=pointer]
+  - generic [ref=e283] [cursor=pointer]: ↑

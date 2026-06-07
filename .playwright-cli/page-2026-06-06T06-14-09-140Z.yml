@@ -1,0 +1,34 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "惠 惠购商城" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: 惠
+        - generic [ref=e6]: 惠购商城
+      - generic [ref=e7]:
+        - generic: 🔍
+        - textbox "搜索商品..." [ref=e8]
+      - navigation [ref=e9]:
+        - link "首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - link "商品" [ref=e11] [cursor=pointer]:
+          - /url: /product.html
+        - link "购物车" [ref=e12] [cursor=pointer]:
+          - /url: /cart.html
+        - link "订单" [ref=e13] [cursor=pointer]:
+          - /url: /orders.html
+        - link "我的" [ref=e14] [cursor=pointer]:
+          - /url: /user.html
+  - generic [ref=e15]:
+    - generic [ref=e17]:
+      - heading "你好，我是 惠购商城助手" [level=2] [ref=e18]
+      - paragraph [ref=e19]: 我可以帮你搜索商品、比价、推荐好物
+      - generic [ref=e20]:
+        - generic [ref=e21] [cursor=pointer]: 推荐3000元手机
+        - generic [ref=e22] [cursor=pointer]: iPhone vs 小米
+        - generic [ref=e23] [cursor=pointer]: 降噪耳机推荐
+        - generic [ref=e24] [cursor=pointer]: 游戏设备搭配
+    - generic [ref=e25]:
+      - textbox "输入你的问题..." [ref=e26]
+      - button "发送" [ref=e27] [cursor=pointer]
+  - generic [ref=e28] [cursor=pointer]: ↑

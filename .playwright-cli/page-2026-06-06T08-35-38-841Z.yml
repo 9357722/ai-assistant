@@ -1,0 +1,82 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "惠购商城 智能电商导购平台" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]:
+          - generic [ref=e7]: 惠购商城
+          - generic [ref=e8]: 智能电商导购平台
+      - textbox "搜索你想要的商品..." [ref=e10]
+      - navigation [ref=e11]:
+        - link "商品" [ref=e12] [cursor=pointer]:
+          - /url: /product.html
+        - link "购物车" [ref=e13] [cursor=pointer]:
+          - /url: /cart.html
+        - link "订单" [ref=e14] [cursor=pointer]:
+          - /url: /orders.html
+        - link "AI 助手" [ref=e15] [cursor=pointer]:
+          - /url: /chat.html
+        - button "登录" [ref=e16] [cursor=pointer]
+  - generic [ref=e21]:
+    - generic [ref=e22]: AI 驱动的智能购物
+    - heading "探索并部署AI模型" [level=1] [ref=e24]
+    - paragraph [ref=e25]: 发现最前沿的 AI 模型，一键部署到你的应用中
+    - generic [ref=e26]:
+      - button "浏览模型" [ref=e27] [cursor=pointer]
+      - button "开始构建" [ref=e28] [cursor=pointer]
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]: 10,000+
+        - generic [ref=e32]: AI 模型
+      - generic [ref=e33]:
+        - generic [ref=e34]: 500+
+        - generic [ref=e35]: 企业用户
+      - generic [ref=e36]:
+        - generic [ref=e37]: 99.9%
+        - generic [ref=e38]: 可用性
+  - generic [ref=e40]:
+    - heading "限时秒杀 · 每日精选好物" [level=2] [ref=e41]
+    - link "查看更多 →" [ref=e42] [cursor=pointer]:
+      - /url: /product.html
+  - generic [ref=e43]:
+    - generic [ref=e46]:
+      - heading "为你推荐" [level=3] [ref=e47]
+      - paragraph [ref=e48]: 基于您的偏好和浏览历史，为您精选以下商品
+    - paragraph [ref=e51]: 加载推荐中...
+  - generic [ref=e53]:
+    - heading "热门商品" [level=2] [ref=e54]
+    - link "查看全部 →" [ref=e55] [cursor=pointer]:
+      - /url: /product.html
+  - generic [ref=e57]:
+    - heading "新品上架" [level=2] [ref=e58]
+    - link "查看全部 →" [ref=e59] [cursor=pointer]:
+      - /url: /product.html
+  - contentinfo [ref=e60]:
+    - generic [ref=e61]:
+      - generic [ref=e62]:
+        - heading "关于我们" [level=4] [ref=e63]
+        - paragraph [ref=e64]: 惠购商城
+        - paragraph [ref=e65]: 让购物更智能、更省钱
+      - generic [ref=e66]:
+        - heading "快速链接" [level=4] [ref=e67]
+        - link "商品中心" [ref=e68] [cursor=pointer]:
+          - /url: /product.html
+        - link "购物车" [ref=e69] [cursor=pointer]:
+          - /url: /cart.html
+        - link "我的订单" [ref=e70] [cursor=pointer]:
+          - /url: /orders.html
+      - generic [ref=e71]:
+        - heading "AI 服务" [level=4] [ref=e72]
+        - link "AI 助手" [ref=e73] [cursor=pointer]:
+          - /url: /chat.html
+        - link "智能推荐" [ref=e74] [cursor=pointer]:
+          - /url: "#"
+        - link "价格对比" [ref=e75] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e76]:
+        - heading "联系我们" [level=4] [ref=e77]
+        - paragraph [ref=e78]: "邮箱: support@aishopping.com"
+        - paragraph [ref=e79]: "电话: 400-888-8888"
+    - generic [ref=e80]: © 2026 惠购商城 - 让购物更简单
+  - generic "惠购商城助手" [ref=e81] [cursor=pointer]
+  - generic [ref=e82] [cursor=pointer]: ↑

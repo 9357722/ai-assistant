@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "惠 惠购商城" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: 惠
+        - generic [ref=e6]: 惠购商城
+      - generic [ref=e7]:
+        - generic: 🔍
+        - textbox "搜索商品..." [ref=e8]
+      - navigation [ref=e9]:
+        - link "首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+        - link "商品" [ref=e11] [cursor=pointer]:
+          - /url: /product.html
+        - link "购物车" [ref=e12] [cursor=pointer]:
+          - /url: /cart.html
+        - link "订单" [ref=e13] [cursor=pointer]:
+          - /url: /orders.html
+        - link "我的" [ref=e14] [cursor=pointer]:
+          - /url: /user.html
+  - generic [ref=e17]:
+    - heading "欢迎来到 惠购商城" [level=2] [ref=e18]
+    - generic [ref=e19]:
+      - generic [ref=e20] [cursor=pointer]: 登录
+      - generic [ref=e21] [cursor=pointer]: 注册
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: 用户名
+        - textbox "请输入用户名" [ref=e25]
+      - generic [ref=e26]:
+        - generic [ref=e27]: 密码
+        - textbox "请输入密码" [ref=e28]
+      - button "登录" [ref=e29] [cursor=pointer]
+      - paragraph [ref=e30]:
+        - text: 还没有账号？
+        - link "立即注册" [ref=e31] [cursor=pointer]:
+          - /url: "#"
+  - generic [ref=e33] [cursor=pointer]: ↑

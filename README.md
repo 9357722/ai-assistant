@@ -55,4 +55,4 @@
 👤 关于作者
 技能：Python / FastAPI / LangChain / Docker / MySQL / CI/CD
 
-求职方向：AI 应用开发工程师 / 后端开发工程师
+求职方向：AI 应用开发工程师 / 后端开发工程师# Sun Jun  7 21:23:58     2026

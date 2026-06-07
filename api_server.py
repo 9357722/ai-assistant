@@ -53,6 +53,7 @@ app.add_middleware(
         "http://localhost:8000",
         "http://localhost:8080",
         "http://127.0.0.1:8000",
+        "http://120.55.95.8",
         "http://120.55.95.8:8000",
         "https://physiology-handle-albuquerque-collect.trycloudflare.com",
         "https://serial-helping-aruba-star.trycloudflare.com",

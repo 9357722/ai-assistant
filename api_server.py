@@ -303,10 +303,12 @@ CREW_SYSTEM_PROMPT = """你现在需要扮演两个角色来完成用户的问�
 @app.post("/agent")
 async def agent_chat(request: AgentRequest, api_key: str = Depends(verify_api_key)):
     """单 Agent 模式：比价助手"""
+    import uuid
     from agent_tools import agent as agent_executor
     try:
         check_rate_limit(api_key)
-        config = {"configurable": {"thread_id": "agent-session-001"}}
+        session_id = str(uuid.uuid4())
+        config = {"configurable": {"thread_id": f"agent-{session_id}"}}
         result = await agent_executor.ainvoke(
             {"messages": [
                 {"role": "system", "content": AGENT_SYSTEM_PROMPT},
@@ -323,10 +325,12 @@ async def agent_chat(request: AgentRequest, api_key: str = Depends(verify_api_ke
 @app.post("/crew")
 async def crew_chat(request: AgentRequest, api_key: str = Depends(verify_api_key)):
     """多角色协作：查价 + 分析（单 Agent Prompt 版）"""
+    import uuid
     from agent_tools import agent as agent_executor
     try:
         check_rate_limit(api_key)
-        config = {"configurable": {"thread_id": "crew-session-001"}}
+        session_id = str(uuid.uuid4())
+        config = {"configurable": {"thread_id": f"crew-{session_id}"}}
         result = await agent_executor.ainvoke(
             {"messages": [
                 {"role": "system", "content": CREW_SYSTEM_PROMPT},

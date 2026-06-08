@@ -3,6 +3,8 @@
 提供商品查询、创建、更新、删除、评价等接口
 """
 import aiomysql
+import hashlib
+import json
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path
@@ -61,8 +63,14 @@ async def list_products(
     支持按关键词、分类、价格区间、平台筛选
     支持按创建时间、价格、销量、名称排序
     """
-    # 构建缓存 key（包含所有查询参数）
-    cache_key = f"products:list:{keyword}:{category_id}:{min_price}:{max_price}:{platform}:{sort_by}:{sort_order}:{page}:{page_size}"
+    # 构建缓存 key（使用 MD5 哈希避免 key 过长）
+    cache_params = {
+        "keyword": keyword, "category_id": category_id,
+        "min_price": min_price, "max_price": max_price,
+        "platform": platform, "sort_by": sort_by,
+        "sort_order": sort_order, "page": page, "page_size": page_size
+    }
+    cache_key = f"products:list:{hashlib.md5(json.dumps(cache_params, default=str).encode()).hexdigest()}"
     cached = get_cache(cache_key)
     if cached:
         return cached

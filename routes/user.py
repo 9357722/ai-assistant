@@ -145,35 +145,34 @@ async def login(login_data: UserLogin, request: Request, db=Depends(get_db)):
     - 返回 JWT Token
     """
     import logging
+    import hashlib
     logger = logging.getLogger(__name__)
-    logger.info(f"LOGIN ATTEMPT: username={login_data.username}")
+
+    # 使用哈希值记录用户名，避免明文泄露
+    username_hash = hashlib.md5(login_data.username.encode()).hexdigest()[:8]
+    logger.info(f"LOGIN ATTEMPT: hash={username_hash}")
 
     client_ip = request.client.host if request.client else "unknown"
-    logger.info(f"Client IP: {client_ip}")
     _check_login_rate_limit(client_ip)
 
     async with db.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             # 查找用户（支持用户名或邮箱）— 明确指定字段，避免 SELECT * 泄露 hash
-            logger.info(f"Executing query for username: {login_data.username}")
             await cur.execute(
                 "SELECT id, username, email, hashed_password, phone, avatar, role, is_active, created_at, updated_at FROM users WHERE username = %s OR email = %s",
                 (login_data.username, login_data.username)
             )
             user = await cur.fetchone()
-            logger.info(f"User found: {user is not None}")
 
             if not user:
-                logger.info("User not found")
+                logger.warning(f"Login failed: user not found, hash={username_hash}, ip={client_ip}")
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="用户名或密码错误",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
 
-            logger.info("Verifying password")
             password_valid = verify_password(login_data.password, user["hashed_password"])
-            logger.info(f"Password valid: {password_valid}")
 
             if not password_valid:
                 raise HTTPException(

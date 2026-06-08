@@ -23,7 +23,9 @@ jobs:
           cd /root/ai-assistant
           git pull origin main
           docker compose down || true
-          docker compose up -d --build
+          docker rmi ai-assistant:slim 2>/dev/null || true
+          docker compose build --no-cache
+          docker compose up -d
           sleep 30
           docker ps -a
           docker logs ai-assistant --tail 20 2>&1 || true

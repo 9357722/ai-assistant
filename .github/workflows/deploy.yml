@@ -21,44 +21,13 @@ jobs:
         password: ${{ secrets.ECS_PASSWORD }}
         script: |
           cd /root/ai-assistant
-
-          # 保存当前版本用于回滚
-          CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "none")
-          echo "Previous commit: $CURRENT_COMMIT" > /tmp/rollback_info.txt
-
-          # 拉取新代码
-          git fetch origin main
-          git reset --hard origin/main
-          git clean -fd
-
-          # 停止旧容器
+          git pull origin main
           docker compose down || true
-
-          # 构建并启动新容器
           docker compose up -d --build
-
-          # 等待容器启动
-          echo "Waiting for container to start..."
           sleep 30
-
-          # 检查容器状态
-          echo "Container status:"
           docker ps -a
-
-          # 检查容器日志
-          echo "Container logs (last 20 lines):"
           docker logs ai-assistant --tail 20 2>&1 || true
-
-          # 健康检查
-          echo "Running health check..."
-          if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-            echo "Deployment successful!"
-          else
-            echo "Health check failed!"
-            echo "Final container logs:"
-            docker logs ai-assistant --tail 30 2>&1 || true
-            exit 1
-          fi
+          curl -f http://localhost:8000/health || (docker logs ai-assistant --tail 30 2>&1 && exit 1)
 
     - name: Rollback on failure
       if: failure()

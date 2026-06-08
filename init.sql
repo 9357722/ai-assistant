@@ -118,10 +118,13 @@ CREATE TABLE IF NOT EXISTS orders (
     paid_at TIMESTAMP NULL,
     shipped_at TIMESTAMP NULL,
     completed_at TIMESTAMP NULL,
+    tracking_no VARCHAR(50),
+    carrier VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     INDEX idx_user_status (user_id, status),
+    INDEX idx_user_status_created (user_id, status, created_at DESC),
     INDEX idx_created (created_at),
     UNIQUE INDEX idx_idempotency (idempotency_key, user_id)
 );

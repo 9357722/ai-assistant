@@ -4,6 +4,7 @@
 """
 import json
 import time
+import logging
 import aiomysql
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -18,6 +19,8 @@ from models.order import (
     OrderResponse,
     OrderListResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/orders", tags=["订单模块"])
 
@@ -192,6 +195,8 @@ async def create_order(
                 )
 
                 await conn.commit()
+
+                logger.info(f"Order created: order_no={order_no}, user_id={current_user.user_id}, amount={total_amount}, items={len(order_items)}")
 
                 return OrderResponse(
                     id=order_id,

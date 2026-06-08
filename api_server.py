@@ -55,13 +55,10 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "http://120.55.95.8",
         "http://120.55.95.8:8000",
-        "https://physiology-handle-albuquerque-collect.trycloudflare.com",
-        "https://serial-helping-aruba-star.trycloudflare.com",
-        "https://improvement-chef-goat-advanced.trycloudflare.com",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 # 注册路由

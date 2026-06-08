@@ -148,6 +148,7 @@ async def get_current_admin(user: TokenData = Depends(get_current_user)) -> Toke
             status_code=status.HTTP_403_FORBIDDEN,
             detail="权限不足，需要管理员角色",
         )
+    # 注意：is_active 检查应在数据库查询时进行，这里只能验证 role
     return user
 
 

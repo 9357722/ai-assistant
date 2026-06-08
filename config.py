@@ -15,9 +15,14 @@ DB_NAME = os.getenv("DB_NAME", "product_db")
 # ============ JWT 配置 ============
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
-    print("WARNING: SECRET_KEY is not set! JWT tokens will be insecure. Set SECRET_KEY in .env")
+    # 开发环境使用默认密钥，生产环境必须设置
+    ENV = os.getenv("ENV", "development")
+    if ENV == "production":
+        raise ValueError("SECRET_KEY environment variable is required in production!")
+    SECRET_KEY = "dev-secret-key-2026-change-in-production"
+    print("WARNING: Using default SECRET_KEY for development. Set SECRET_KEY in .env for production!")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("TOKEN_EXPIRE_MINUTES", "120"))  # 2小时
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("TOKEN_EXPIRE_MINUTES", "60"))  # 1小时
 
 # ============ API Keys ============
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")

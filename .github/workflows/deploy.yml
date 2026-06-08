@@ -36,7 +36,7 @@ jobs:
           docker compose up -d --build
 
           # 等待健康检查
-          sleep 20
+          sleep 60
 
           # 健康检查
           if curl -f http://localhost:8000/health > /dev/null 2>&1; then

@@ -31,23 +31,32 @@ jobs:
           git reset --hard origin/main
           git clean -fd
 
-          # 构建并启动
+          # 停止旧容器
           docker compose down
+
+          # 构建并启动新容器
           docker compose up -d --build
 
-          # 等待健康检查
-          sleep 60
+          # 等待容器启动
+          echo "Waiting for container to start..."
+          sleep 30
+
+          # 检查容器状态
+          echo "Container status:"
+          docker ps -a | grep ai-assistant
+
+          # 检查容器日志
+          echo "Container logs (last 30 lines):"
+          docker logs ai-assistant --tail 30 2>&1 || true
 
           # 健康检查
+          echo "Running health check..."
           if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-            echo "Deployment successful"
+            echo "Deployment successful!"
           else
-            echo "Health check failed, checking container logs..."
-            docker logs ai-assistant --tail 50
-            echo "Rolling back..."
-            git reset --hard $CURRENT_COMMIT
-            docker compose down
-            docker compose up -d --build
+            echo "Health check failed!"
+            echo "Final container logs:"
+            docker logs ai-assistant --tail 50 2>&1 || true
             exit 1
           fi
 

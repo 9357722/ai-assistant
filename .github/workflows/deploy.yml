@@ -34,9 +34,6 @@ jobs:
           # 停止旧容器
           docker compose down || true
 
-          # 清理旧镜像
-          docker system prune -f || true
-
           # 构建并启动新容器
           docker compose up -d --build
 

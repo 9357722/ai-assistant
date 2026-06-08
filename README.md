@@ -1,58 +1,88 @@
-# 🛒 AI 智能商品比价助手
+# 🛒 惠购商城
 
-> 基于 FastAPI + LangChain + DeepSeek 的智能商品比价 API，支持多平台价格查询、Agent 自主调用工具、多角色协作分析。
+> 基于 FastAPI + LangChain + DeepSeek 的智能电商平台，支持 AI 比价、商品管理、购物车、订单支付、商家后台等功能。
 
 ## 🚀 在线体验
 
+- **商城首页**：[http://120.55.95.8:8000/](http://120.55.95.8:8000/)
 - **API 文档**：[http://120.55.95.8:8000/docs](http://120.55.95.8:8000/docs)
-- **聊天页面**：[http://120.55.95.8:8080/chat.html](http://120.55.95.8:8080/chat.html)
 
 ## 🧠 核心功能
 
-- ✅ **智能比价**：输入商品名称，自动查询京东、淘宝、拼多多等平台价格
-- ✅ **Agent 自主决策**：AI 自主调用数据库查询工具、联网搜索工具、计算器
-- ✅ **多角色协作**：查价 Agent + 分析 Agent 分工合作，输出购买建议
-- ✅ **RAG 增强检索**：基于 ChromaDB 向量数据库的商品知识库问答
-- ✅ **异步高并发**：全链路 async/await，支持同时处理多个请求
-- ✅ **API 安全鉴权**：API Key 验证 + 请求频率限流
+### 用户端
+- ✅ **商品浏览**：分类筛选、搜索、商品详情展示
+- ✅ **购物车**：添加商品、数量调整、批量结算
+- ✅ **订单管理**：下单、模拟支付（支付宝/微信）、取消订单
+- ✅ **收货地址**：多地址管理、默认地址设置
+- ✅ **AI 比价**：智能查询多平台价格，输出购买建议
+
+### 商家端
+- ✅ **商品管理**：商品 CRUD、上下架、库存管理
+- ✅ **图片上传**：商品图片本地存储
+- ✅ **订单处理**：查看订单、发货操作
+
+### 技术特性
+- ✅ **Agent 自主决策**：AI 自主调用数据库查询、联网搜索、计算器
+- ✅ **多角色协作**：查价 Agent + 分析 Agent 分工合作
+- ✅ **WebSocket 实时通知**：订单状态变更实时推送
+- ✅ **Redis 缓存**：热门商品、会话缓存加速
+- ✅ **JWT 鉴权**：Token 认证 + 密码 bcrypt 加密
 
 ## 🛠️ 技术栈
 
 | 层级 | 技术 |
 |------|------|
 | **后端框架** | FastAPI (异步) |
-| **AI 引擎** | LangChain + LangGraph + DeepSeek-V4-Flash |
-| **Agent** | 自定义 Tool + MemorySaver 记忆系统 |
-| **向量数据库** | ChromaDB |
+| **AI 引擎** | LangChain + DeepSeek-V4-Flash |
 | **关系数据库** | MySQL 8.0 |
+| **缓存** | Redis |
 | **容器化** | Docker + Docker Compose |
 | **CI/CD** | GitHub Actions 自动部署 |
-| **云服务** | 阿里云 ECS (Ubuntu 26.04) + OSS |
+| **云服务** | 阿里云 ECS |
 
 ## 📁 项目结构
-├── api_server.py # FastAPI 主服务（含鉴权、限流、所有接口）
-├── agent_tools.py # Agent 工具函数（商品查询、计算器、联网搜索）
-├── crew_agent.py # 多 Agent 协作编排
-├── utils.py # 工具函数（ChatSession、向量数据库初始化）
-├── recommend.py # 商品推荐模块
-├── docker-compose.yml # 一键编排 API + MySQL
-├── Dockerfile # 镜像构建文件
-├── requirements.txt # Python 依赖
-├── init.sql # 数据库初始化脚本
-├── chat.html # 前端聊天页面
-└── .github/workflows/ # CI/CD 自动部署工作流
 
-📡 API 接口
-接口	方法	说明
-/chat	POST	普通对话
-/agent	POST	Agent 模式（自主调用工具）
-/crew	POST	多角色协作（查价+分析+建议）
-/chat/stream	POST	流式对话
-/add_product_db	POST	添加商品到数据库
-/update_price	PUT	修改商品价格
-/delete_product	DELETE	删除商品
+```
+├── api_server.py          # FastAPI 主服务入口
+├── routes/
+│   ├── product.py         # 商品接口
+│   ├── order.py           # 订单接口（含支付）
+│   ├── cart.py            # 购物车接口
+│   ├── merchant.py        # 商家后台接口
+│   └── user.py            # 用户认证接口
+├── services/
+│   ├── payment.py         # 支付服务（支付宝/微信模拟）
+│   ├── cache.py           # Redis 缓存服务
+│   └── websocket_manager.py  # WebSocket 实时通知
+├── models/                # 数据模型定义
+├── static/                # 前端静态页面
+│   ├── index.html         # 商城首页
+│   ├── product.html       # 商品详情
+│   ├── cart.html          # 购物车
+│   ├── orders.html        # 订单管理
+│   ├── merchant.html      # 商家后台
+│   └── user.html          # 用户中心
+├── docker-compose.yml     # Docker 编排
+├── Dockerfile             # 镜像构建
+├── requirements.txt       # Python 依赖
+└── init.sql               # 数据库初始化
+```
 
-👤 关于作者
-技能：Python / FastAPI / LangChain / Docker / MySQL / CI/CD
+## 📡 API 接口
 
-求职方向：AI 应用开发工程师 / 后端开发工程师# Sun Jun  7 21:23:58     2026
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/products` | GET | 商品列表（支持分类筛选） |
+| `/api/products/{id}` | GET | 商品详情 |
+| `/api/cart` | GET/POST | 购物车操作 |
+| `/api/orders` | GET/POST | 订单列表/创建 |
+| `/api/orders/{id}/pay` | POST | 模拟支付 |
+| `/api/merchant/products` | GET/POST | 商家商品管理 |
+| `/api/user/login` | POST | 用户登录 |
+| `/api/user/register` | POST | 用户注册 |
+
+## 👤 关于作者
+
+**技能**：Python / FastAPI / LangChain / Docker / MySQL / Redis / CI-CD
+
+**求职方向**：AI 应用开发工程师 / 后端开发工程师

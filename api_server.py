@@ -319,6 +319,8 @@ async def agent_chat(request: AgentRequest, api_key: str = Depends(verify_api_ke
     except Exception as e:
         logger.error(f"Agent error: {e}", exc_info=True)
         return JSONResponse(status_code=500, content={"code": 500, "message": "AI 服务暂时不可用"})
+
+@app.post("/crew")
 async def crew_chat(request: AgentRequest, api_key: str = Depends(verify_api_key)):
     """多角色协作：查价 + 分析（单 Agent Prompt 版）"""
     from agent_tools import agent as agent_executor

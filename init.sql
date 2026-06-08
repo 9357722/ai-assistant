@@ -169,4 +169,4 @@ INSERT INTO categories (name, sort_order) VALUES
 
 -- 外键约束（categories 在 products 之后创建，所以用 ALTER TABLE）
 ALTER TABLE products ADD CONSTRAINT fk_product_category
-    FOREIGN KEY (category_id) REFERENCES categories(id);
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;

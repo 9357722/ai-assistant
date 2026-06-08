@@ -21,8 +21,10 @@ jobs:
         password: ${{ secrets.ECS_PASSWORD }}
         script: |
           cd /root/ai-assistant
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
+          git clean -fd
           docker compose down
           docker compose up -d --build
           sleep 15
-          docker exec ai-assistant sh -c "cp /app/static/products/product_100.jpg /app/static/products/蓝牙耳机_Pro.jpg 2>/dev/null; cp /app/static/products/product_101.jpg /app/static/products/蓝牙耳机_Lite.jpg 2>/dev/null; cp /app/static/products/product_102.jpg /app/static/products/iPhone_17_Pro.jpg 2>/dev/null; cp /app/static/products/product_103.jpg /app/static/products/华为Mate_70_Pro.jpg 2>/dev/null; cp /app/static/products/product_104.jpg /app/static/products/红米K80.jpg 2>/dev/null; cp /app/static/products/product_105.jpg /app/static/products/小米14.jpg 2>/dev/null; ls /app/static/products/*.jpg | wc -l"
+          docker exec ai-assistant sh -c "mkdir -p /app/static/products && cp /app/static/products/product_100.jpg /app/static/products/蓝牙耳机_Pro.jpg 2>/dev/null; cp /app/static/products/product_101.jpg /app/static/products/蓝牙耳机_Lite.jpg 2>/dev/null; cp /app/static/products/product_102.jpg /app/static/products/iPhone_17_Pro.jpg 2>/dev/null; cp /app/static/products/product_103.jpg /app/static/products/华为Mate_70_Pro.jpg 2>/dev/null; cp /app/static/products/product_104.jpg /app/static/products/红米K80.jpg 2>/dev/null; cp /app/static/products/product_105.jpg /app/static/products/小米14.jpg 2>/dev/null; echo 'Done'"

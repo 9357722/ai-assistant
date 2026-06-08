@@ -12,12 +12,12 @@ from pydantic import BaseModel, Field
 class CartItemAdd(BaseModel):
     """添加购物车项"""
     product_id: int = Field(..., description="商品ID")
-    quantity: int = Field(1, ge=1, description="数量")
+    quantity: int = Field(1, ge=1, le=99, description="数量 (1-99)")
 
 
 class CartItemUpdate(BaseModel):
     """更新购物车项"""
-    quantity: Optional[int] = Field(None, ge=1, description="数量")
+    quantity: Optional[int] = Field(None, ge=1, le=99, description="数量 (1-99)")
     selected: Optional[bool] = Field(None, description="是否选中")
 
 

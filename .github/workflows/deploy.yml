@@ -41,10 +41,10 @@ jobs:
           # 健康检查
           if curl -f http://localhost:8000/health > /dev/null 2>&1; then
             echo "Deployment successful"
-            # 复制产品图片
-            docker exec ai-assistant sh -c "mkdir -p /app/static/products && cp /app/static/products/product_100.jpg /app/static/products/蓝牙耳机_Pro.jpg 2>/dev/null; cp /app/static/products/product_101.jpg /app/static/products/蓝牙耳机_Lite.jpg 2>/dev/null; cp /app/static/products/product_102.jpg /app/static/products/iPhone_17_Pro.jpg 2>/dev/null; cp /app/static/products/product_103.jpg /app/static/products/华为Mate_70_Pro.jpg 2>/dev/null; cp /app/static/products/product_104.jpg /app/static/products/红米K80.jpg 2>/dev/null; cp /app/static/products/product_105.jpg /app/static/products/小米14.jpg 2>/dev/null; echo 'Done'"
           else
-            echo "Health check failed, rolling back..."
+            echo "Health check failed, checking container logs..."
+            docker logs ai-assistant --tail 50
+            echo "Rolling back..."
             git reset --hard $CURRENT_COMMIT
             docker compose down
             docker compose up -d --build

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys, os, time
 import logging
+from logging.handlers import RotatingFileHandler
 from collections import defaultdict
 
 from dotenv import load_dotenv
@@ -13,10 +14,22 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # ================== 日志配置 ==================
+LOG_DIR = os.getenv("LOG_DIR", "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.StreamHandler(),
+        RotatingFileHandler(
+            os.path.join(LOG_DIR, "app.log"),
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8"
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -84,6 +97,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """统一 HTTP 异常格式"""
+    # 记录 4xx/5xx 错误
+    if exc.status_code >= 400:
+        log_level = logging.WARNING if exc.status_code < 500 else logging.ERROR
+        logger.log(
+            log_level,
+            f"HTTP {exc.status_code}: {request.method} {request.url.path} - {exc.detail}"
+        )
     return JSONResponse(
         status_code=exc.status_code,
         content={"code": exc.status_code, "message": exc.detail},

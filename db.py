@@ -3,12 +3,30 @@
 全局数据库连接池
 应用启动时创建，所有路由共享
 """
+import os
 import logging
+import time
 import aiomysql
 import config
 
 logger = logging.getLogger(__name__)
 _pool: aiomysql.Pool = None
+
+# 慢查询阈值（秒）
+SLOW_QUERY_THRESHOLD = float(os.getenv("SLOW_QUERY_THRESHOLD", "1.0"))
+
+
+class SlowQueryLogger:
+    """慢查询日志记录器"""
+
+    @staticmethod
+    def log_if_slow(query: str, duration: float, params=None):
+        """记录慢查询"""
+        if duration > SLOW_QUERY_THRESHOLD:
+            logger.warning(
+                f"Slow query ({duration:.3f}s): {query[:200]}"
+                + (f" | params: {params}" if params else "")
+            )
 
 
 async def init_pool():

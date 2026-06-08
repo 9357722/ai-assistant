@@ -6,13 +6,16 @@ import json
 import os
 import re
 import time
+import logging
 from typing import List, Optional, Dict, Any, AsyncGenerator
 from collections import defaultdict
 
 import aiomysql
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, APIError, RateLimitError, AuthenticationError
 
 import config
+
+logger = logging.getLogger(__name__)
 
 # 对话历史存储（用户ID → 消息列表）
 _chat_history: Dict[int, List[dict]] = defaultdict(list)
@@ -131,7 +134,17 @@ class AICustomerService:
 
             return reply
 
+        except AuthenticationError:
+            logger.error("DeepSeek API key invalid or expired")
+            return "AI 服务认证失败，请联系管理员"
+        except RateLimitError:
+            logger.warning("DeepSeek API rate limit exceeded")
+            return "AI 服务请求过于频繁，请稍后再试"
+        except APIError as e:
+            logger.error(f"DeepSeek API error: {e}")
+            return "AI 服务暂时不可用，请稍后再试"
         except Exception as e:
+            logger.error(f"Unexpected error in AI chat: {e}", exc_info=True)
             return "抱歉，AI 服务暂时不可用，请稍后再试。"
 
     async def chat_stream(
@@ -187,7 +200,17 @@ class AICustomerService:
             self._save_message(user_id, "user", message)
             self._save_message(user_id, "assistant", full_reply)
 
+        except AuthenticationError:
+            logger.error("DeepSeek API key invalid or expired")
+            yield "\n\nAI 服务认证失败，请联系管理员"
+        except RateLimitError:
+            logger.warning("DeepSeek API rate limit exceeded")
+            yield "\n\nAI 服务请求过于频繁，请稍后再试"
+        except APIError as e:
+            logger.error(f"DeepSeek API error: {e}")
+            yield "\n\nAI 服务暂时不可用，请稍后再试"
         except Exception as e:
+            logger.error(f"Unexpected error in AI chat stream: {e}", exc_info=True)
             yield f"\n\nAI 服务出错：{str(e)}"
 
     async def _get_user_context(self, user_id: int) -> Optional[Dict[str, Any]]:

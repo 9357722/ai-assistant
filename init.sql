@@ -18,9 +18,12 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_name (name),
+    INDEX idx_platform (platform),
     INDEX idx_category (category_id),
     INDEX idx_status (status),
-    INDEX idx_sales (sales)
+    INDEX idx_sales (sales),
+    INDEX idx_price (price),
+    INDEX idx_platform_status (platform, status)
 );
 
 -- 建表：行情资讯

@@ -210,6 +210,62 @@
             .order-actions { margin-left: 0; width: 100%; }
             .action-btn { flex: 1; text-align: center; }
         }
+
+        /* 支付方式选择弹窗 */
+        .payment-modal {
+            width: 400px;
+            max-width: 90%;
+        }
+        .payment-methods {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+        }
+        .payment-method {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 140px;
+        }
+        .payment-method:hover {
+            border-color: var(--color-accent);
+            background: rgba(0, 113, 227, 0.05);
+        }
+        .method-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 10px;
+        }
+        .alipay-icon {
+            background: linear-gradient(135deg, #1677ff, #4096ff);
+        }
+        .wechat-icon {
+            background: linear-gradient(135deg, #07c160, #2aae67);
+        }
+        .method-name {
+            font-size: 14px;
+            color: #333;
+        }
+        .payment-amount {
+            text-align: center;
+            padding: 15px;
+            font-size: 18px;
+            color: var(--color-danger);
+            border-top: 1px solid #eee;
+        }
     </style>
 </head>
 <body>
@@ -258,6 +314,29 @@
                 <button class="modal-close" onclick="closeOrderModal()">&times;</button>
             </div>
             <div class="modal-body" id="orderDetail"></div>
+        </div>
+    </div>
+
+    <!-- 支付方式选择弹窗 -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content payment-modal">
+            <div class="modal-header">
+                <h3>选择支付方式</h3>
+                <button type="button" class="modal-close" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <div class="payment-methods">
+                <div class="payment-method" onclick="selectPayment('alipay')">
+                    <div class="method-icon alipay-icon">支</div>
+                    <div class="method-name">支付宝</div>
+                </div>
+                <div class="payment-method" onclick="selectPayment('wechat')">
+                    <div class="method-icon wechat-icon">微</div>
+                    <div class="method-name">微信支付</div>
+                </div>
+            </div>
+            <div class="payment-amount">
+                支付金额: <span id="paymentAmount">¥0.00</span>
+            </div>
         </div>
     </div>
 
@@ -329,7 +408,7 @@
         function renderOrderActions(order) {
             let html = `<button class="action-btn" onclick="viewOrderDetail(${order.id})">详情</button>`;
             if (order.status === 'pending') {
-                html += `<button class="action-btn primary" onclick="payOrder(${order.id})">支付</button>`;
+                html += `<button class="action-btn primary" onclick="payOrder(${order.id}, ${order.total_amount})">支付</button>`;
                 html += `<button class="action-btn danger" onclick="cancelOrder(${order.id})">取消</button>`;
             } else if (order.status === 'shipped') {
                 html += `<button class="action-btn primary" onclick="confirmOrder(${order.id})">确认收货</button>`;
@@ -383,13 +462,49 @@
 
         function closeOrderModal() { document.getElementById('orderModal').style.display = 'none'; }
 
-        async function payOrder(orderId) {
+        let currentPayOrderId = null;
+        let currentPayAmount = 0;
+
+        function payOrder(orderId, amount) {
+            currentPayOrderId = orderId;
+            currentPayAmount = amount;
+            document.getElementById('paymentAmount').textContent = `¥${amount}`;
+            document.getElementById('paymentModal').style.display = 'block';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+            currentPayOrderId = null;
+        }
+
+        async function selectPayment(method) {
+            if (!currentPayOrderId) return;
+
             const token = localStorage.getItem('token');
+            const methodName = method === 'alipay' ? '支付宝' : '微信支付';
+
             try {
-                const res = await fetch(`${API_BASE}/api/orders/${orderId}/pay`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-                if (res.ok) { showToast('支付成功'); loadOrders(); }
-                else { const data = await res.json(); showToast(data.detail || '支付失败', 'error'); }
-            } catch (err) { showToast('网络错误', 'error'); }
+                showToast(`正在通过${methodName}支付...`);
+                const res = await fetch(`${API_BASE}/api/orders/${currentPayOrderId}/pay`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ payment_method: method })
+                });
+
+                if (res.ok) {
+                    closePaymentModal();
+                    showToast(`${methodName}支付成功`);
+                    loadOrders();
+                } else {
+                    const data = await res.json();
+                    showToast(data.detail || '支付失败', 'error');
+                }
+            } catch (err) {
+                showToast('网络错误', 'error');
+            }
         }
 
         async function cancelOrder(orderId) {

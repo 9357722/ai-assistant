@@ -32,6 +32,9 @@ lora_output/
 *.png
 *.jpg
 *.jpeg
+!static/products/*.jpg
+!static/products/*.png
+!static/products/*.jpeg
 
 # 测试文件（可选，保留测试脚本但排除敏感数据）
 # test_*.py

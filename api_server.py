@@ -113,19 +113,38 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
-    """记录每个请求的方法、路径、耗时"""
+    """记录每个请求的方法、路径、耗时，并收集指标"""
     # Debug: Log all incoming requests
     client_ip = request.client.host if request.client else "unknown"
-    logger.info(f"[DEBUG] Incoming request: {request.method} {request.url.path} from {client_ip}")
+
+    # 跳过 metrics 和 health 端点的日志
+    skip_logging = request.url.path in ("/metrics", "/health")
+    if not skip_logging:
+        logger.info(f"Incoming request: {request.method} {request.url.path} from {client_ip}")
 
     start = time.time()
     try:
         response = await call_next(request)
         elapsed = round((time.time() - start) * 1000, 1)
-        logger.info(f"{request.method} {request.url.path} → {response.status_code} ({elapsed}ms)")
+
+        # 收集指标
+        _metrics["requests_total"] += 1
+        _metrics["requests_by_status"][response.status_code] += 1
+        _metrics["requests_by_path"][request.url.path] += 1
+        _metrics["response_times"].append(elapsed)
+        # 只保留最近 1000 条响应时间
+        if len(_metrics["response_times"]) > 1000:
+            _metrics["response_times"] = _metrics["response_times"][-1000:]
+
+        if response.status_code >= 400:
+            _metrics["errors_total"] += 1
+
+        if not skip_logging:
+            logger.info(f"{request.method} {request.url.path} → {response.status_code} ({elapsed}ms)")
         return response
     except Exception as e:
-        logger.error(f"[DEBUG] Request failed: {request.method} {request.url.path} - {e}", exc_info=True)
+        _metrics["errors_total"] += 1
+        logger.error(f"Request failed: {request.method} {request.url.path} - {e}", exc_info=True)
         raise
 
 # ================== 健康检查 ==================
@@ -142,6 +161,31 @@ async def health_check():
         return {"status": "ok", "database": "connected"}
     except Exception as e:
         return JSONResponse(status_code=503, content={"status": "error", "database": str(e)})
+
+# ================== Prometheus 指标 ==================
+
+_metrics = {
+    "requests_total": 0,
+    "requests_by_status": defaultdict(int),
+    "requests_by_path": defaultdict(int),
+    "response_times": [],
+    "errors_total": 0,
+}
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus 指标端点"""
+    avg_response_time = (
+        sum(_metrics["response_times"][-100:]) / len(_metrics["response_times"][-100:])
+        if _metrics["response_times"] else 0
+    )
+    return {
+        "requests_total": _metrics["requests_total"],
+        "errors_total": _metrics["errors_total"],
+        "avg_response_time_ms": round(avg_response_time, 2),
+        "requests_by_status": dict(_metrics["requests_by_status"]),
+        "active_websockets": ws_manager.active_count if hasattr(ws_manager, 'active_count') else 0,
+    }
 
 # ================== WebSocket 实时通知 ==================
 from fastapi import WebSocket, WebSocketDisconnect

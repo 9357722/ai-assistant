@@ -70,14 +70,121 @@
 
 ## 📡 API 接口
 
+### 商品接口
+
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `/api/products` | GET | 商品列表（支持分类筛选） |
 | `/api/products/{id}` | GET | 商品详情 |
-| `/api/cart` | GET/POST | 购物车操作 |
-| `/api/orders` | GET/POST | 订单列表/创建 |
+
+**请求示例**：
+```bash
+# 获取商品列表
+curl http://localhost:8000/api/products?page=1&page_size=10&category_id=1
+
+# 获取商品详情
+curl http://localhost:8000/api/products/1
+```
+
+**响应示例**：
+```json
+{
+  "total": 100,
+  "page": 1,
+  "page_size": 10,
+  "items": [
+    {
+      "id": 1,
+      "name": "iPhone 17 Pro",
+      "price": 7999.00,
+      "platform": "京东",
+      "stock": 50,
+      "sales": 12,
+      "main_image": "/static/products/iPhone_17_Pro.jpg"
+    }
+  ]
+}
+```
+
+### 用户认证
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/user/register` | POST | 用户注册 |
+| `/api/user/login` | POST | 用户登录 |
+
+**登录请求示例**：
+```bash
+curl -X POST http://localhost:8000/api/user/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "password": "123456"}'
+```
+
+**登录响应示例**：
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "username": "testuser",
+    "role": "user"
+  }
+}
+```
+
+### 购物车接口
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/cart` | GET | 获取购物车 |
+| `/api/cart` | POST | 添加商品到购物车 |
+| `/api/cart/{id}` | PUT | 更新购物车项 |
+| `/api/cart/{id}` | DELETE | 删除购物车项 |
+
+### 订单接口
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/orders` | GET | 订单列表 |
+| `/api/orders` | POST | 创建订单 |
+| `/api/orders/{id}` | GET | 订单详情 |
 | `/api/orders/{id}/pay` | POST | 模拟支付 |
-| `/api/merchant/products` | GET/POST | 商家商品管理 |
+| `/api/orders/{id}/cancel` | POST | 取消订单 |
+
+**创建订单请求示例**：
+```bash
+curl -X POST http://localhost:8000/api/orders \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "address_id": 1,
+    "cart_item_ids": [1, 2, 3],
+    "remark": "请尽快发货"
+  }'
+```
+
+### 商家接口
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/merchant/products` | GET | 商家商品列表 |
+| `/api/merchant/products` | POST | 创建商品 |
+| `/api/merchant/orders` | GET | 商家订单列表 |
+
+### AI 接口
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/ai/recommendations` | GET | 个性化推荐 |
+| `/api/ai/chat` | POST | AI 客服对话 |
+| `/api/ai/chat/stream` | POST | AI 客服流式对话 |
+
+### 监控接口
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/health` | GET | 健康检查 |
+| `/metrics` | GET | Prometheus 指标 |
 | `/api/user/login` | POST | 用户登录 |
 | `/api/user/register` | POST | 用户注册 |
 

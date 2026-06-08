@@ -21,10 +21,49 @@ jobs:
         password: ${{ secrets.ECS_PASSWORD }}
         script: |
           cd /root/ai-assistant
+
+          # 保存当前版本用于回滚
+          CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "none")
+          echo "Previous commit: $CURRENT_COMMIT" > /tmp/rollback_info.txt
+
+          # 拉取新代码
           git fetch origin main
           git reset --hard origin/main
           git clean -fd
+
+          # 构建并启动
           docker compose down
           docker compose up -d --build
-          sleep 15
-          docker exec ai-assistant sh -c "mkdir -p /app/static/products && cp /app/static/products/product_100.jpg /app/static/products/蓝牙耳机_Pro.jpg 2>/dev/null; cp /app/static/products/product_101.jpg /app/static/products/蓝牙耳机_Lite.jpg 2>/dev/null; cp /app/static/products/product_102.jpg /app/static/products/iPhone_17_Pro.jpg 2>/dev/null; cp /app/static/products/product_103.jpg /app/static/products/华为Mate_70_Pro.jpg 2>/dev/null; cp /app/static/products/product_104.jpg /app/static/products/红米K80.jpg 2>/dev/null; cp /app/static/products/product_105.jpg /app/static/products/小米14.jpg 2>/dev/null; echo 'Done'"
+
+          # 等待健康检查
+          sleep 20
+
+          # 健康检查
+          if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+            echo "Deployment successful"
+            # 复制产品图片
+            docker exec ai-assistant sh -c "mkdir -p /app/static/products && cp /app/static/products/product_100.jpg /app/static/products/蓝牙耳机_Pro.jpg 2>/dev/null; cp /app/static/products/product_101.jpg /app/static/products/蓝牙耳机_Lite.jpg 2>/dev/null; cp /app/static/products/product_102.jpg /app/static/products/iPhone_17_Pro.jpg 2>/dev/null; cp /app/static/products/product_103.jpg /app/static/products/华为Mate_70_Pro.jpg 2>/dev/null; cp /app/static/products/product_104.jpg /app/static/products/红米K80.jpg 2>/dev/null; cp /app/static/products/product_105.jpg /app/static/products/小米14.jpg 2>/dev/null; echo 'Done'"
+          else
+            echo "Health check failed, rolling back..."
+            git reset --hard $CURRENT_COMMIT
+            docker compose down
+            docker compose up -d --build
+            exit 1
+          fi
+
+    - name: Rollback on failure
+      if: failure()
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.ECS_HOST }}
+        username: ${{ secrets.ECS_USERNAME }}
+        password: ${{ secrets.ECS_PASSWORD }}
+        script: |
+          cd /root/ai-assistant
+          PREV_COMMIT=$(cat /tmp/rollback_info.txt 2>/dev/null | grep "Previous commit:" | awk '{print $3}' || echo "none")
+          if [ "$PREV_COMMIT" != "none" ]; then
+            echo "Rolling back to $PREV_COMMIT"
+            git reset --hard $PREV_COMMIT
+            docker compose down
+            docker compose up -d --build
+          fi

@@ -39,7 +39,7 @@ jobs:
 
           # 等待容器启动
           echo "Waiting for container to start..."
-          sleep 10
+          sleep 30
 
           # 检查容器状态
           echo "Container status:"
@@ -49,20 +49,16 @@ jobs:
           echo "Container logs (last 20 lines):"
           docker logs ai-assistant --tail 20 2>&1 || true
 
-          # 尝试多次健康检查
-          for i in 1 2 3; do
-            echo "Health check attempt $i..."
-            if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-              echo "Deployment successful!"
-              exit 0
-            fi
-            sleep 10
-          done
-
-          echo "Health check failed after 3 attempts"
-          echo "Final container logs:"
-          docker logs ai-assistant --tail 30 2>&1 || true
-          exit 1
+          # 健康检查
+          echo "Running health check..."
+          if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+            echo "Deployment successful!"
+          else
+            echo "Health check failed!"
+            echo "Final container logs:"
+            docker logs ai-assistant --tail 30 2>&1 || true
+            exit 1
+          fi
 
     - name: Rollback on failure
       if: failure()

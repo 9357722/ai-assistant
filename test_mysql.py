@@ -1,13 +1,8 @@
 import pymysql
+from db_config import get_pymysql_config
 
 # 连接数据库
-conn = pymysql.connect(
-    host='localhost',
-    user='root',
-    password='108045',
-    database='product_db',
-    charset='utf8mb4'
-)
+conn = pymysql.connect(**get_pymysql_config())
 
 # 创建游标
 cursor = conn.cursor()

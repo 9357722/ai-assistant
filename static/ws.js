@@ -14,14 +14,25 @@ const WSClient = (() => {
         return localStorage.getItem('token');
     }
 
-    function connect() {
+    async function fetchTicket(token) {
+        const res = await fetch('/api/ws-ticket', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Failed to create WebSocket ticket');
+        const data = await res.json();
+        return data.ticket;
+    }
+
+    async function connect() {
         const token = getToken();
         if (!token) return;
 
         const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const url = `${protocol}//${location.host}/ws/${token}`;
 
         try {
+            const ticket = await fetchTicket(token);
+            const url = `${protocol}//${location.host}/ws/${encodeURIComponent(ticket)}`;
             ws = new WebSocket(url);
         } catch (e) {
             console.warn('WebSocket connection failed:', e);
@@ -110,10 +121,13 @@ const WSClient = (() => {
 function showNotification(data) {
     const toast = document.createElement('div');
     toast.className = 'ws-notification';
-    toast.innerHTML = `
-        <div class="ws-notification-title">${data.type === 'order_status' ? '订单通知' : '系统通知'}</div>
-        <div class="ws-notification-body">${data.message || data.content || ''}</div>
-    `;
+    const title = document.createElement('div');
+    title.className = 'ws-notification-title';
+    title.textContent = data.type === 'order_status' ? '订单通知' : '系统通知';
+    const body = document.createElement('div');
+    body.className = 'ws-notification-body';
+    body.textContent = data.message || data.content || '';
+    toast.append(title, body);
     document.body.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('show'));
     setTimeout(() => {

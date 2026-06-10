@@ -1,5 +1,6 @@
 """用 Unsplash 搜索API更新商品图片"""
 import pymysql
+from db_config import get_pymysql_config
 
 # 使用 Unsplash 的搜索图片（允许热链接）
 PRODUCT_IMAGES = {
@@ -74,13 +75,7 @@ PRODUCT_IMAGES = {
 }
 
 def update_images():
-    conn = pymysql.connect(
-        host='localhost',
-        user='root',
-        password='108045',
-        database='product_db',
-        charset='utf8mb4'
-    )
+    conn = pymysql.connect(**get_pymysql_config())
     cursor = conn.cursor()
 
     cursor.execute("SELECT id, name FROM products")

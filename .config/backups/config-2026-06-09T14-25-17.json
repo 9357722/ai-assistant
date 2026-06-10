@@ -1,0 +1,21 @@
+{
+  "upstream": [
+    {
+      "baseUrl": "https://api.openai.com",
+      "baseUrls": [
+        "https://api.openai.com"
+      ],
+      "apiKeys": [
+        "sk-f12f97cee1535872e1e78e4d6a4eee7d5ab69c9fd2838205d83f20be1695e17c"
+      ],
+      "serviceType": "claude",
+      "name": "openai-0yxxxg",
+      "priority": 1,
+      "status": "active"
+    }
+  ],
+  "responsesUpstream": [],
+  "geminiUpstream": [],
+  "fuzzyModeEnabled": true,
+  "stripBillingHeader": true
+}

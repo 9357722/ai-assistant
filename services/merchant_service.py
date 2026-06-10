@@ -194,12 +194,13 @@ class MerchantService:
 
     # 订单状态机：定义合法的状态转换
     ORDER_STATUS_TRANSITIONS = {
-        'pending': ['paid', 'cancelled'],      # 待付款 -> 已付款/已取消
-        'paid': ['shipped', 'cancelled'],      # 已付款 -> 已发货/已取消
-        'shipped': ['completed', 'returned'],  # 已发货 -> 已完成/已退货
-        'completed': [],                       # 已完成 - 终态
-        'cancelled': [],                       # 已取消 - 终态
-        'returned': [],                        # 已退货 - 终态
+        'pending': ['paid', 'cancelled'],              # 待付款 -> 已付款/已取消
+        'paid': ['shipped', 'cancelled', 'refunded'],  # 已付款 -> 已发货/已取消/已退款
+        'shipped': ['completed', 'returned'],          # 已发货 -> 已完成/已退货
+        'completed': ['returned'],                     # 已完成 -> 已退货
+        'cancelled': [],                               # 已取消 - 终态
+        'refunded': [],                                # 已退款 - 终态
+        'returned': [],                                # 已退货 - 终态
     }
 
     async def get_merchant_orders(self, merchant_id: int, status: Optional[str] = None,

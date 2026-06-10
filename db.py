@@ -15,6 +15,19 @@ _pool: aiomysql.Pool = None
 # 慢查询阈值（秒）
 SLOW_QUERY_THRESHOLD = float(os.getenv("SLOW_QUERY_THRESHOLD", "1.0"))
 
+SENSITIVE_PARAM_MARKER = "***"
+
+
+def _summarize_params(params):
+    """Return a safe, shape-only representation for query parameters."""
+    if params is None:
+        return None
+    if isinstance(params, dict):
+        return {key: SENSITIVE_PARAM_MARKER for key in params.keys()}
+    if isinstance(params, (list, tuple)):
+        return [SENSITIVE_PARAM_MARKER for _ in params]
+    return SENSITIVE_PARAM_MARKER
+
 
 class SlowQueryLogger:
     """慢查询日志记录器"""
@@ -23,9 +36,10 @@ class SlowQueryLogger:
     def log_if_slow(query: str, duration: float, params=None):
         """记录慢查询"""
         if duration > SLOW_QUERY_THRESHOLD:
+            safe_params = _summarize_params(params)
             logger.warning(
                 f"Slow query ({duration:.3f}s): {query[:200]}"
-                + (f" | params: {params}" if params else "")
+                + (f" | params: {safe_params}" if safe_params else "")
             )
 
 

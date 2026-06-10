@@ -429,7 +429,7 @@
             const address = order.address_snapshot || {};
             const itemsHtml = order.items.map(item => `
                 <div class="order-item">
-                    <div class="item-image">${item.product_image ? `<img src="${item.product_image}" alt="${escapeHTML(item.product_name)}">` : ''}</div>
+                    <div class="item-image">${item.product_image ? `<img src="${safeImageUrl(item.product_image, '')}" alt="${escapeHTML(item.product_name)}">` : ''}</div>
                     <div class="item-info">
                         <div class="item-name">${escapeHTML(item.product_name)}</div>
                         <div class="item-spec">单价: ¥${item.price} x${item.quantity}</div>
@@ -439,8 +439,8 @@
             document.getElementById('orderDetail').innerHTML = `
                 <div class="detail-section">
                     <h4 class="detail-title">订单信息</h4>
-                    <div class="detail-row"><span class="label">订单号</span><span class="value">${order.order_no}</span></div>
-                    <div class="detail-row"><span class="label">订单状态</span><span class="value">${statusMap[order.status] || order.status}</span></div>
+                    <div class="detail-row"><span class="label">订单号</span><span class="value">${escapeHTML(order.order_no)}</span></div>
+                    <div class="detail-row"><span class="label">订单状态</span><span class="value">${escapeHTML(statusMap[order.status] || order.status)}</span></div>
                     <div class="detail-row"><span class="label">下单时间</span><span class="value">${new Date(order.created_at).toLocaleString()}</span></div>
                     ${order.paid_at ? `<div class="detail-row"><span class="label">支付时间</span><span class="value">${new Date(order.paid_at).toLocaleString()}</span></div>` : ''}
                     ${order.remark ? `<div class="detail-row"><span class="label">备注</span><span class="value">${escapeHTML(order.remark)}</span></div>` : ''}

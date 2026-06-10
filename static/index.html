@@ -1162,7 +1162,7 @@
             const discounts = ['-20%', '-15%', '-30%', '-25%', '-10%', '-40%', '-35%', '-50%'];
             const allProducts = [...products, ...products];
             container.innerHTML = allProducts.map((p, i) => {
-                const imgSrc = p.main_image || getLocalImage(p.name) || `/static/products/product_${p.id}.jpg`;
+                const imgSrc = safeImageUrl(p.main_image || getLocalImage(p.name), `/static/products/product_${p.id}.jpg`);
                 return `
                 <div class="stream-card" onclick="window.location.href='/product.html?id=${p.id}'">
                     <div class="stream-img">
@@ -1303,7 +1303,7 @@
         function renderProducts(containerId, products) {
             const container = document.getElementById(containerId);
             container.innerHTML = products.map((p, i) => {
-                const imgSrc = p.main_image || getLocalImage(p.name) || `/static/products/product_${p.id}.jpg`;
+                const imgSrc = safeImageUrl(p.main_image || getLocalImage(p.name), `/static/products/product_${p.id}.jpg`);
                 return `
                 <div class="product-card" onclick="window.location.href='/product.html?id=${p.id}'">
                     <div class="card-image">
@@ -1353,7 +1353,7 @@
                 if (data.recommendations && data.recommendations.length > 0) {
                     document.getElementById('aiGrid').innerHTML = data.recommendations.slice(0, 4).map((p, i) => `
                         <div class="ai-card" onclick="window.location.href='/product.html?id=${p.id}'">
-                            <img class="ai-card-img" src="${p.main_image || getLocalImage(p.name) || '/static/products/product_' + p.id + '.jpg'}" alt="${escapeHTML(p.name)}" loading="lazy">
+                            <img class="ai-card-img" src="${safeImageUrl(p.main_image || getLocalImage(p.name), '/static/products/product_' + p.id + '.jpg')}" alt="${escapeHTML(p.name)}" loading="lazy">
                             <div class="ai-card-name">${escapeHTML(p.name)}</div>
                             <div class="ai-card-price">¥${p.price}</div>
                             <div class="ai-card-reason">${escapeHTML(p.reason) || '推荐'}</div>

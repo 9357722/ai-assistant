@@ -3,8 +3,8 @@
 商家端路由
 """
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import Literal, Optional
 import os
 import uuid
 
@@ -23,39 +23,72 @@ async def get_db():
 # ================================================================
 
 class MerchantCreate(BaseModel):
-    shop_name: str
-    shop_description: Optional[str] = ""
-    contact_phone: Optional[str] = ""
-    contact_email: Optional[str] = ""
-    address: Optional[str] = ""
+    shop_name: str = Field(..., min_length=1, max_length=100)
+    shop_description: Optional[str] = Field("", max_length=1000)
+    contact_phone: Optional[str] = Field("", max_length=20)
+    contact_email: Optional[EmailStr] = None
+    address: Optional[str] = Field("", max_length=200)
 
 
 class ProductCreate(BaseModel):
-    name: str
-    price: float
+    name: str = Field(..., min_length=1, max_length=100)
+    price: float = Field(..., gt=0)
     category_id: Optional[int] = None
-    description: Optional[str] = ""
-    main_image: Optional[str] = ""
-    stock: Optional[int] = 100
+    description: Optional[str] = Field("", max_length=5000)
+    main_image: Optional[str] = Field("", max_length=500)
+    stock: int = Field(100, ge=0, le=999999)
+    platform: str = Field("自营", min_length=1, max_length=50)
+
+    @field_validator("main_image")
+    @classmethod
+    def validate_main_image(cls, value: str) -> str:
+        if not value:
+            return value
+        if value.startswith("/static/products/"):
+            return value
+        raise ValueError("商品图片只能使用已上传的 /static/products/ 路径")
+
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    price: Optional[float] = Field(None, gt=0)
+    category_id: Optional[int] = None
+    description: Optional[str] = Field(None, max_length=5000)
+    main_image: Optional[str] = Field(None, max_length=500)
+    stock: Optional[int] = Field(None, ge=0, le=999999)
+    status: Optional[Literal["on_sale", "off_sale"]] = None
+
+    @field_validator("main_image")
+    @classmethod
+    def validate_main_image(cls, value: Optional[str]) -> Optional[str]:
+        if not value:
+            return value
+        if value.startswith("/static/products/"):
+            return value
+        raise ValueError("商品图片只能使用已上传的 /static/products/ 路径")
 
 
 class CouponCreate(BaseModel):
-    name: str
-    type: str  # fixed 或 percent
-    value: float
-    min_amount: Optional[float] = 0
-    max_uses: Optional[int] = 0
+    name: str = Field(..., min_length=1, max_length=100)
+    type: Literal["fixed", "percent"]
+    value: float = Field(..., gt=0)
+    min_amount: float = Field(0, ge=0)
+    max_uses: int = Field(0, ge=0)
     start_date: Optional[str] = None
     end_date: Optional[str] = None
 
 
 class MerchantInfoUpdate(BaseModel):
-    shop_name: Optional[str] = None
-    shop_description: Optional[str] = None
-    shop_logo: Optional[str] = None
-    contact_phone: Optional[str] = None
-    contact_email: Optional[str] = None
-    address: Optional[str] = None
+    shop_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    shop_description: Optional[str] = Field(None, max_length=1000)
+    shop_logo: Optional[str] = Field(None, max_length=500)
+    contact_phone: Optional[str] = Field(None, max_length=20)
+    contact_email: Optional[EmailStr] = None
+    address: Optional[str] = Field(None, max_length=200)
+
+
+class OrderStatusUpdate(BaseModel):
+    status: Literal["shipped", "completed", "cancelled"]
 
 
 # ================================================================
@@ -115,7 +148,7 @@ async def update_merchant_info(data: MerchantInfoUpdate, user=Depends(get_curren
         raise HTTPException(status_code=404, detail="商家不存在")
 
     # 只更新非None字段
-    update_data = {k: v for k, v in data.dict().items() if v is not None}
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     if update_data:
         await service.update_merchant(merchant['id'], **update_data)
     return {"message": "更新成功"}
@@ -147,12 +180,12 @@ async def add_product(data: ProductCreate, user=Depends(get_current_user), db=De
     if not merchant:
         raise HTTPException(status_code=403, detail="您不是商家")
 
-    product_id = await service.add_product_to_merchant(merchant['id'], data.dict())
+    product_id = await service.add_product_to_merchant(merchant['id'], data.model_dump())
     return {"message": "商品添加成功", "product_id": product_id}
 
 
 @router.put("/products/{product_id}")
-async def update_product(product_id: int, data: dict, user=Depends(get_current_user), db=Depends(get_db)):
+async def update_product(product_id: int, data: ProductUpdate, user=Depends(get_current_user), db=Depends(get_db)):
     """更新商品"""
     from services.merchant_service import MerchantService
     service = MerchantService(db)
@@ -160,7 +193,11 @@ async def update_product(product_id: int, data: dict, user=Depends(get_current_u
     if not merchant:
         raise HTTPException(status_code=403, detail="您不是商家")
 
-    success = await service.update_merchant_product(merchant['id'], product_id, **data)
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="没有要更新的内容")
+
+    success = await service.update_merchant_product(merchant['id'], product_id, **update_data)
     if not success:
         raise HTTPException(status_code=404, detail="商品不存在或无权修改")
     return {"message": "更新成功"}
@@ -249,7 +286,7 @@ async def get_merchant_orders(status: Optional[str] = None, page: int = 1, page_
 
 
 @router.put("/orders/{order_id}/status")
-async def update_order_status(order_id: int, data: dict, user=Depends(get_current_user), db=Depends(get_db)):
+async def update_order_status(order_id: int, data: OrderStatusUpdate, user=Depends(get_current_user), db=Depends(get_db)):
     """更新订单状态"""
     from services.merchant_service import MerchantService
     service = MerchantService(db)
@@ -257,11 +294,7 @@ async def update_order_status(order_id: int, data: dict, user=Depends(get_curren
     if not merchant:
         raise HTTPException(status_code=403, detail="您不是商家")
 
-    status = data.get('status')
-    if not status:
-        raise HTTPException(status_code=400, detail="请提供状态")
-
-    success, message = await service.update_order_status(merchant['id'], order_id, status)
+    success, message = await service.update_order_status(merchant['id'], order_id, data.status)
     if not success:
         raise HTTPException(status_code=400, detail=message)
     return {"message": message}
@@ -308,7 +341,7 @@ async def create_coupon(data: CouponCreate, user=Depends(get_current_user), db=D
     if not merchant:
         raise HTTPException(status_code=403, detail="您不是商家")
 
-    coupon_id = await service.create_coupon(merchant['id'], data.dict())
+    coupon_id = await service.create_coupon(merchant['id'], data.model_dump())
     return {"message": "优惠券创建成功", "coupon_id": coupon_id}
 
 
@@ -386,5 +419,5 @@ async def agent_confirm_product(data: ProductCreate, user=Depends(get_current_us
     if not merchant:
         raise HTTPException(status_code=403, detail="您不是商家")
 
-    product_id = await service.add_product_to_merchant(merchant['id'], data.dict())
+    product_id = await service.add_product_to_merchant(merchant['id'], data.model_dump())
     return {"message": "商品添加成功", "product_id": product_id}

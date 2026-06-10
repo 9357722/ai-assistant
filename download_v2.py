@@ -1,7 +1,8 @@
 import urllib.request, os, hashlib, time, pymysql
+from db_config import get_pymysql_config
 
 # 获取数据库中的商品
-conn = pymysql.connect(host='192.168.2.172', port=3306, user='root', password='108045', db='product_db', charset='utf8mb4')
+conn = pymysql.connect(**get_pymysql_config())
 cur = conn.cursor()
 cur.execute("SELECT id, name, category_id FROM products WHERE id > 46 ORDER BY id")
 products = cur.fetchall()

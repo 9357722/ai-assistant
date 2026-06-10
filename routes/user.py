@@ -18,7 +18,7 @@ from auth import (
     create_access_token,
     get_current_user,
     get_current_admin,
-    decode_token_allow_expired,
+    decode_token,
     TokenData,
 )
 from models.user import (
@@ -220,7 +220,7 @@ async def refresh_token(
     """
     刷新 Token
 
-    - 接收当前 Token（即使已过期）
+    - 接收当前未过期 Token
     - 验证用户仍然有效
     - 返回新 Token
     """
@@ -229,7 +229,7 @@ async def refresh_token(
         raise HTTPException(status_code=401, detail="缺少认证凭据")
 
     old_token = auth_header[7:]
-    token_data = decode_token_allow_expired(old_token)
+    token_data = decode_token(old_token)
 
     if not token_data.user_id:
         raise HTTPException(status_code=401, detail="无效的 Token")

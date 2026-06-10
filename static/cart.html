@@ -366,7 +366,7 @@
             container.innerHTML = cartItems.map(item => `
                 <div class="cart-item" data-id="${item.id}">
                     <input type="checkbox" class="item-checkbox" ${selectedItems.has(item.id) ? 'checked' : ''} onchange="toggleItem(${item.id})">
-                    <div class="item-image"><img src="${item.product_image || '/static/products/product_' + item.product_id + '.jpg'}" alt="${escapeHTML(item.product_name)}" loading="lazy"></div>
+                    <div class="item-image"><img src="${safeImageUrl(item.product_image, '/static/products/product_' + item.product_id + '.jpg')}" alt="${escapeHTML(item.product_name)}" loading="lazy"></div>
                     <div class="item-info">
                         <div class="item-name">${escapeHTML(item.product_name)}</div>
                         <div class="item-platform">${escapeHTML(item.product_platform || '')}</div>

@@ -1,6 +1,7 @@
 import pymysql
+from db_config import get_pymysql_config
 
-conn = pymysql.connect(host='192.168.2.172', port=3306, user='root', password='108045', db='product_db', charset='utf8mb4')
+conn = pymysql.connect(**get_pymysql_config())
 cur = conn.cursor()
 
 # 16个分类，每个31个商品，共496个

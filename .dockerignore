@@ -22,9 +22,16 @@ __pycache__/
 # Data
 my_vectordb/
 lora_model/
+logs/
 *.sql
 *.png
 *.jpg
+!static/
+!static/products/
+!static/products/*.jpg
+!static/products/*.jpeg
+!static/products/*.png
+!static/products/*.webp
 
 # Archives
 *.tar

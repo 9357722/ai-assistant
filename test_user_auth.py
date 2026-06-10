@@ -6,16 +6,10 @@ import asyncio
 import aiomysql
 from auth import get_password_hash, verify_password, create_access_token, decode_token
 from models.user import UserCreate, UserLogin
+from db_config import get_aiomysql_config
 
 # 数据库配置
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "user": "root",
-    "password": "108045",
-    "db": "product_db",
-    "charset": "utf8mb4",
-}
+DB_CONFIG = get_aiomysql_config()
 
 
 async def test_user_registration():

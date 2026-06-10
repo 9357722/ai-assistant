@@ -1316,7 +1316,7 @@
 
             tbody.innerHTML = products.map(p => `
                 <tr>
-                    <td><img src="${p.main_image || '/static/products/product_' + p.id + '.jpg'}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;"></td>
+                    <td><img src="${safeImageUrl(p.main_image, '/static/products/product_' + p.id + '.jpg')}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;"></td>
                     <td>${escapeHTML(p.name)}</td>
                     <td>¥${p.price}</td>
                     <td>${p.stock}</td>
@@ -1355,7 +1355,7 @@
                 if (data.url) {
                     uploadedImageUrl = data.url;
                     document.getElementById('imagePreview').innerHTML = `
-                        <img src="${data.url}" class="image-preview">
+                        <img src="${safeImageUrl(data.url, '')}" class="image-preview">
                     `;
                     showToast('图片上传成功', 'success');
                 }

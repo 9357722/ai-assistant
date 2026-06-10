@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """批量导入真实商品数据"""
 import pymysql
+from db_config import get_pymysql_config
 
-conn = pymysql.connect(host='localhost', user='root', password='108045', database='product_db')
+conn = pymysql.connect(**get_pymysql_config())
 cur = conn.cursor()
 
 # 清除旧商品数据

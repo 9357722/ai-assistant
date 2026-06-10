@@ -163,7 +163,7 @@ async def compare_products(
 
 # ============ 商品详情 ============
 
-@router.get("/{product_id}", response_model=ProductResponse)
+@router.get("/{product_id:int}", response_model=ProductResponse)
 async def get_product(
     product_id: int = Path(..., description="商品ID"),
     service: ProductService = Depends(get_product_service),
@@ -197,7 +197,7 @@ async def create_product(
 
 # ============ 更新商品（管理员） ============
 
-@router.put("/{product_id}", response_model=ProductResponse)
+@router.put("/{product_id:int}", response_model=ProductResponse)
 async def update_product(
     product_id: int,
     product_data: ProductUpdate,
@@ -215,7 +215,7 @@ async def update_product(
 
 # ============ 删除商品（管理员） ============
 
-@router.delete("/{product_id}")
+@router.delete("/{product_id:int}")
 async def delete_product(
     product_id: int,
     current_user: TokenData = Depends(get_current_admin),
@@ -243,7 +243,7 @@ async def list_categories(
 
 # ============ 商品评价 ============
 
-@router.get("/{product_id}/reviews", response_model=ReviewListResponse)
+@router.get("/{product_id:int}/reviews", response_model=ReviewListResponse)
 async def get_product_reviews(
     product_id: int,
     page: int = Query(1, ge=1, description="页码"),
@@ -254,7 +254,7 @@ async def get_product_reviews(
     return await service.get_product_reviews(product_id, page, page_size)
 
 
-@router.post("/{product_id}/reviews", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/{product_id:int}/reviews", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)
 async def create_product_review(
     product_id: int,
     review_data: ReviewCreate,

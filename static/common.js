@@ -14,6 +14,14 @@ function escapeHTML(str) {
         .replace(/'/g, '&#39;');
 }
 
+function safeImageUrl(url, fallback = '/static/products/product_1.jpg') {
+    if (!url) return fallback;
+    const value = String(url).trim();
+    if (value.startsWith('/static/products/')) return value;
+    if (value.startsWith('https://images.unsplash.com/')) return value;
+    return fallback;
+}
+
 // 统一 Toast 提示
 function showToast(message, type = 'success') {
     let toast = document.getElementById('toast');

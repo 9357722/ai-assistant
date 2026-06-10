@@ -45,7 +45,7 @@ docker compose down && docker compose up -d
 # 测试 API
 curl -X POST http://localhost:8000/agent \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: sk-agent-key-001" \
+  -H "X-API-Key: <your-agent-api-key>" \
   -d '{"question":"华为手机多少钱"}'
 ```
 

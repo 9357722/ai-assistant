@@ -1,0 +1,38 @@
+{
+  "upstream": [
+    {
+      "baseUrl": "https://api.openai.com",
+      "baseUrls": [
+        "https://api.openai.com"
+      ],
+      "apiKeys": [
+        "sk-f12f97cee1535872e1e78e4d6a4eee7d5ab69c9fd2838205d83f20be1695e17c"
+      ],
+      "serviceType": "claude",
+      "name": "openai-0yxxxg",
+      "priority": 1,
+      "status": "active",
+      "promotionUntil": "2026-06-09T14:30:17.3860638+08:00"
+    }
+  ],
+  "responsesUpstream": [],
+  "geminiUpstream": [],
+  "chatUpstream": [
+    {
+      "baseUrl": "https://api.openai.com",
+      "baseUrls": [
+        "https://api.openai.com"
+      ],
+      "apiKeys": [
+        "sk-f12f97cee1535872e1e78e4d6a4eee7d5ab69c9fd2838205d83f20be1695e17c"
+      ],
+      "serviceType": "openai",
+      "name": "openai-1y9lc8",
+      "priority": 1,
+      "status": "active",
+      "promotionUntil": "2026-06-09T14:32:37.8230227+08:00"
+    }
+  ],
+  "fuzzyModeEnabled": true,
+  "stripBillingHeader": true
+}

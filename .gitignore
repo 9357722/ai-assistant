@@ -1,7 +1,11 @@
 ai_env/
+node_modules/
 *.tar
 *.zip
 *.tar.gz
+
+# 归档文件目录
+artifacts/
 
 # 敏感文件
 .env

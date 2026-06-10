@@ -5,22 +5,43 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    - name: Import application
+      run: python -c "import api_server; print('api_server import ok')"
+    - name: Build Docker image
+      run: docker compose build
+
   deploy:
     runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name != 'pull_request'
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Deploy to ECS via SSH
-      uses: appleboy/ssh-action@v0.1.5
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.ECS_HOST }}
         username: ${{ secrets.ECS_USERNAME }}
         password: ${{ secrets.ECS_PASSWORD }}
         script: |
           cd /root/ai-assistant
+          git rev-parse HEAD > /tmp/ai-assistant-prev-commit
           git pull origin main
           docker compose down || true
           docker rmi ai-assistant:slim 2>/dev/null || true
@@ -33,14 +54,14 @@ jobs:
 
     - name: Rollback on failure
       if: failure()
-      uses: appleboy/ssh-action@v0.1.5
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.ECS_HOST }}
         username: ${{ secrets.ECS_USERNAME }}
         password: ${{ secrets.ECS_PASSWORD }}
         script: |
           cd /root/ai-assistant
-          PREV_COMMIT=$(cat /tmp/rollback_info.txt 2>/dev/null | grep "Previous commit:" | awk '{print $3}' || echo "none")
+          PREV_COMMIT=$(cat /tmp/ai-assistant-prev-commit 2>/dev/null || echo "none")
           if [ "$PREV_COMMIT" != "none" ]; then
             echo "Rolling back to $PREV_COMMIT"
             git reset --hard $PREV_COMMIT

@@ -48,7 +48,7 @@ from routes.merchant import router as merchant_router
 # ================== FastAPI 应用 ==================
 import config
 from db import init_pool, close_pool
-from auth import decode_token
+from auth import get_current_admin, get_current_user, TokenData
 from services.websocket_manager import ws_manager
 from contextlib import asynccontextmanager
 
@@ -59,16 +59,16 @@ async def lifespan(app):
     yield
     await close_pool()
 
-app = FastAPI(title="AI 智能电商导购平台", lifespan=lifespan)
+app = FastAPI(
+    title="AI 智能电商导购平台",
+    lifespan=lifespan,
+    docs_url=None if config.ENV == "production" else "/docs",
+    redoc_url=None if config.ENV == "production" else "/redoc",
+    openapi_url=None if config.ENV == "production" else "/openapi.json",
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
-        "http://localhost:8080",
-        "http://127.0.0.1:8000",
-        "http://120.55.95.8",
-        "http://120.55.95.8:8000",
-    ],
+    allow_origins=config.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-API-Key"],
@@ -159,8 +159,31 @@ async def health_check():
             async with conn.cursor() as cur:
                 await cur.execute("SELECT 1")
         return {"status": "ok", "database": "connected"}
-    except Exception as e:
-        return JSONResponse(status_code=503, content={"status": "error", "database": str(e)})
+    except Exception:
+        logger.exception("Health check failed")
+        return JSONResponse(status_code=503, content={"status": "error", "database": "unavailable"})
+
+# ================== 版本信息 ==================
+
+@app.get("/version")
+async def version_info():
+    """版本信息端点 - 显示构建版本和 Git commit"""
+    import subprocess
+    try:
+        git_commit = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=BASE_DIR,
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+    except Exception:
+        git_commit = "unknown"
+
+    return {
+        "version": "1.0.0",
+        "git_commit": git_commit,
+        "environment": config.ENV,
+        "python_version": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+    }
 
 # ================== Prometheus 指标 ==================
 
@@ -173,7 +196,7 @@ _metrics = {
 }
 
 @app.get("/metrics")
-async def metrics():
+async def metrics(current_user: TokenData = Depends(get_current_admin)):
     """Prometheus 指标端点"""
     avg_response_time = (
         sum(_metrics["response_times"][-100:]) / len(_metrics["response_times"][-100:])
@@ -184,27 +207,48 @@ async def metrics():
         "errors_total": _metrics["errors_total"],
         "avg_response_time_ms": round(avg_response_time, 2),
         "requests_by_status": dict(_metrics["requests_by_status"]),
-        "active_websockets": ws_manager.active_count if hasattr(ws_manager, 'active_count') else 0,
+        "active_websockets": ws_manager.count(),
     }
 
 # ================== WebSocket 实时通知 ==================
 from fastapi import WebSocket, WebSocketDisconnect
+import secrets
 
-@app.websocket("/ws/{token}")
-async def websocket_endpoint(websocket: WebSocket, token: str):
+_WS_TICKET_TTL_SECONDS = int(os.getenv("WS_TICKET_TTL_SECONDS", "60"))
+_ws_tickets: dict[str, tuple[int, float]] = {}
+
+def _cleanup_ws_tickets(now: float):
+    expired = [ticket for ticket, (_, expires_at) in _ws_tickets.items() if expires_at <= now]
+    for ticket in expired:
+        _ws_tickets.pop(ticket, None)
+
+@app.post("/api/ws-ticket")
+async def create_ws_ticket(current_user: TokenData = Depends(get_current_user)):
+    """创建一次性 WebSocket 连接票据，避免把 JWT 放进 URL。"""
+    now = time.time()
+    _cleanup_ws_tickets(now)
+    ticket = secrets.token_urlsafe(32)
+    _ws_tickets[ticket] = (current_user.user_id, now + _WS_TICKET_TTL_SECONDS)
+    return {"ticket": ticket, "expires_in": _WS_TICKET_TTL_SECONDS}
+
+@app.websocket("/ws/{ticket}")
+async def websocket_endpoint(websocket: WebSocket, ticket: str):
     """
     WebSocket 连接端点
-    客户端通过 ws://host/ws/{jwt_token} 连接
+    客户端先通过 /api/ws-ticket 获取一次性短期 ticket，再连接 ws://host/ws/{ticket}
     """
-    # 验证 token
-    try:
-        payload = decode_token(token)
-    except Exception:
-        await websocket.close(code=4001, reason="无效的 token")
+    now = time.time()
+    _cleanup_ws_tickets(now)
+    ticket_data = _ws_tickets.pop(ticket, None)
+    if not ticket_data:
+        await websocket.close(code=4001, reason="无效或已过期的 ticket")
         return
-    user_id = payload.user_id
+    user_id, expires_at = ticket_data
+    if expires_at <= now:
+        await websocket.close(code=4001, reason="ticket 已过期")
+        return
     if not user_id:
-        await websocket.close(code=4001, reason="token 中缺少 user_id")
+        await websocket.close(code=4001, reason="ticket 中缺少 user_id")
         return
 
     await ws_manager.connect(websocket, user_id)
@@ -255,9 +299,10 @@ def check_rate_limit(api_key: str, max_requests: int = 30, window: int = 60):
     """
     try:
         from services.cache import get_redis
-        import redis
+        import hashlib
         r = get_redis()
-        key = f"rate_limit:{api_key}"
+        key_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+        key = f"rate_limit:{key_hash}"
         now = time.time()
         pipe = r.pipeline()
         pipe.zremrangebyscore(key, 0, now - window)  # 清除窗口外的记录

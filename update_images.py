@@ -1,5 +1,6 @@
 """更新商品图片为真实产品图"""
 import pymysql
+from db_config import get_pymysql_config
 
 # 商品图片映射（使用可靠的图片源）
 PRODUCT_IMAGES = {
@@ -89,13 +90,7 @@ RELIABLE_IMAGES = {
 }
 
 def update_images():
-    conn = pymysql.connect(
-        host='localhost',
-        user='root',
-        password='108045',
-        database='product_db',
-        charset='utf8mb4'
-    )
+    conn = pymysql.connect(**get_pymysql_config())
     cursor = conn.cursor()
 
     # 获取所有商品

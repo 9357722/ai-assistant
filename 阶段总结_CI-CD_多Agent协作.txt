@@ -208,7 +208,7 @@ Process       : 执行策略（sequential = 顺序执行）
 查看 Actions 状态          https://github.com/9357722/ai-assistant/actions
 手动重新运行               Actions 页面 → Re-run jobs
 测试 /crew 接口            curl -X POST http://localhost:8000/crew
-                            -H "X-API-Key: sk-agent-key-001"
+                            -H "X-API-Key: <your-agent-api-key>"
                             -d '{"question":"华为手机多少钱"}'
 修复 ECS DNS               sudo nano /etc/docker/daemon.json
                             （修改 registry-mirrors）

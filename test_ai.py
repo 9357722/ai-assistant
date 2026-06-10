@@ -5,16 +5,10 @@ AI 模块测试脚本
 import asyncio
 import aiomysql
 import json
+from db_config import get_aiomysql_config
 
 # 数据库配置
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 3306,
-    "user": "root",
-    "password": "108045",
-    "db": "product_db",
-    "charset": "utf8mb4",
-}
+DB_CONFIG = get_aiomysql_config()
 
 
 async def test_recommendation_engine():

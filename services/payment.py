@@ -162,9 +162,9 @@ class PaymentService:
                         (item["quantity"], item["quantity"], item["product_id"])
                     )
 
-                # 更新订单状态
+                # 更新订单状态为 refunded（已退款）
                 await cur.execute(
-                    "UPDATE orders SET status = 'cancelled' WHERE id = %s",
+                    "UPDATE orders SET status = 'refunded' WHERE id = %s",
                     (order_id,)
                 )
 

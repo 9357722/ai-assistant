@@ -6,6 +6,7 @@ import time
 import hashlib
 import requests
 from urllib.parse import quote
+from db_config import get_pymysql_config
 
 # 项目路径
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -242,13 +243,7 @@ def update_database(results):
     """更新数据库中的图片路径"""
     import pymysql
 
-    conn = pymysql.connect(
-        host='localhost',
-        user='root',
-        password='108045',
-        database='product_db',
-        charset='utf8mb4'
-    )
+    conn = pymysql.connect(**get_pymysql_config())
     cursor = conn.cursor()
 
     updated = 0

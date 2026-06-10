@@ -35,7 +35,7 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: 108045
+      MYSQL_ROOT_PASSWORD: <set-in-secret-manager>
       MYSQL_DATABASE: product_db
     volumes:
       - mysql_data:/var/lib/mysql
@@ -103,7 +103,7 @@ HTTP 状态码       : 401=未认证  429=请求过多  200=成功
 2. 关键代码
 --------------------------------------------------------------
 【验证函数】
-VALID_API_KEYS = {"sk-agent-key-001", "sk-agent-key-002"}
+VALID_API_KEYS = {"<your-agent-api-key-1>", "<your-agent-api-key-2>"}
 
 def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
     if x_api_key not in VALID_API_KEYS:
@@ -139,7 +139,7 @@ curl -X POST http://localhost:8000/agent
 正确 Key → 200
 curl -X POST http://localhost:8000/agent
   -H "Content-Type: application/json"
-  -H "X-API-Key: sk-agent-key-001"
+  -H "X-API-Key: <your-agent-api-key>"
   -d '{"question":"test"}'
 
 错误 Key → 401
@@ -153,7 +153,7 @@ curl -X POST http://localhost:8000/agent
 --------------------------------------------------------------
 【坑1】Field required
   原因：请求没带 X-API-Key 头
-  解决：加 -H "X-API-Key: sk-agent-key-001"
+  解决：加 -H "X-API-Key: <your-agent-api-key>"
 
 【坑2】无效的 API Key
   原因：Key 不在白名单里
@@ -259,7 +259,7 @@ cryptography
 停止+删数据卷              docker compose down -v
 查看服务状态               docker compose ps
 查看容器日志               docker logs 容器名 --tail 30
-测试鉴权接口               curl ... -H "X-API-Key: sk-agent-key-001" -d '{...}'
+测试鉴权接口               curl ... -H "X-API-Key: <your-agent-api-key>" -d '{...}'
 设置环境变量               set DEEPSEEK_API_KEY=sk-xxx
 一键重建                   docker compose down && docker build -t ai-assistant:slim . && docker compose up -d
 检查端口占用               netstat -ano | findstr ":3306"

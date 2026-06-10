@@ -7,9 +7,13 @@ services:
     ports:
       - "8000:8000"
     environment:
+      ENV: production
       DB_HOST: host.docker.internal
+      DB_USER: ${DB_USER:-app_user}
       DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-product_db}
       SECRET_KEY: ${SECRET_KEY}
+      AGENT_API_KEYS: ${AGENT_API_KEYS:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       OPENAI_API_KEY: ${DEEPSEEK_API_KEY}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY}
@@ -19,7 +23,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; r=urllib.request.urlopen('http://localhost:8000/health', timeout=5); raise SystemExit(0 if r.status == 200 else 1)"]
       interval: 30s
       timeout: 10s
       retries: 5

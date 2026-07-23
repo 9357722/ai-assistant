@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import sys, os, time
 import logging
 from logging.handlers import RotatingFileHandler
@@ -56,6 +56,9 @@ from contextlib import asynccontextmanager
 async def lifespan(app):
     """应用生命周期：启动时初始化连接池，关闭时释放"""
     await init_pool()
+    # 初始化 Redis
+    from services.redis_client import init_redis
+    await init_redis()
     yield
     await close_pool()
 
@@ -82,6 +85,13 @@ app.include_router(order_router)
 app.include_router(ai_router)
 app.include_router(admin_router)
 app.include_router(merchant_router)
+
+# 注册记忆管理路由
+try:
+    from routes.memory import router as memory_router
+    app.include_router(memory_router)
+except ImportError as e:
+    logger.warning(f"Memory routes not loaded: {e}")
 
 # ================== 全局异常处理 ==================
 

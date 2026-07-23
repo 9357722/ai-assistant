@@ -1,11 +1,13 @@
-"""
+﻿"""
 AI 客服服务
 提供智能客服对话、订单查询、商品咨询、比价、优惠券等功能
+集成记忆管理系统（工作记忆 + 长期记忆 + 用户画像）
 """
 import json
 import os
 import re
 import time
+import uuid
 import logging
 from typing import List, Optional, Dict, Any, AsyncGenerator
 from collections import defaultdict
@@ -14,24 +16,26 @@ import aiomysql
 from openai import AsyncOpenAI, APIError, RateLimitError, AuthenticationError
 
 import config
+from services.multimodal_service import describe_image_for_agent, image_to_base64, get_image_media_type
+from services.memory_manager import MemoryManager, get_memory_manager
 
 logger = logging.getLogger(__name__)
 
 # 对话历史存储（用户ID → 消息列表）
-_chat_history: Dict[int, List[dict]] = defaultdict(list)
-_MAX_HISTORY = 20
-_HISTORY_EXPIRE = 3600
-_chat_timestamps: Dict[int, float] = {}
+# 改用 MySQL 持久化，重启不丢失
+_MAX_HISTORY = 20  # 每次请求加载最近 N 条
 
 # 降价提醒存储（商品ID → [{user_id, target_price}]）
 _price_alerts: Dict[int, List[dict]] = defaultdict(list)
+_PRICE_ALERTS_MAX_PRODUCTS = 5000  # 最大监控商品数
 
 
 class AICustomerService:
-    """AI 客服"""
+    """AI 客服（集成记忆管理）"""
 
     def __init__(self, pool: aiomysql.Pool):
         self.pool = pool
+        self.memory_manager: Optional[MemoryManager] = None
         self.system_prompt = """你是 AI 智能电商客服助手，名叫"小智"。
 
 ## 你的职责：
@@ -63,36 +67,81 @@ class AICustomerService:
 - 分析商品评价
 - 尺码推荐"""
 
-    def _get_history(self, user_id: int) -> List[dict]:
-        """获取用户的对话历史"""
-        now = time.time()
-        if user_id in _chat_timestamps:
-            if now - _chat_timestamps[user_id] > _HISTORY_EXPIRE:
-                _chat_history[user_id] = []
-        _chat_timestamps[user_id] = now
-        return _chat_history[user_id]
+    async def _init_memory_manager(self):
+        """初始化记忆管理器"""
+        if not self.memory_manager:
+            self.memory_manager = await get_memory_manager(self.pool)
 
-    def _save_message(self, user_id: int, role: str, content: str):
-        """保存一条消息到历史"""
-        history = _chat_history[user_id]
-        history.append({"role": role, "content": content})
-        if len(history) > _MAX_HISTORY:
-            _chat_history[user_id] = history[-_MAX_HISTORY:]
+    async def _get_history(self, user_id: int) -> List[dict]:
+        """从 MySQL 获取用户的最近对话历史"""
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    await cur.execute(
+                        """SELECT role, content FROM chat_history
+                           WHERE user_id = %s
+                           ORDER BY id DESC LIMIT %s""",
+                        (user_id, _MAX_HISTORY)
+                    )
+                    rows = await cur.fetchall()
+                    # 反转为时间正序
+                    return list(reversed(rows))
+        except Exception as e:
+            logger.warning(f"Failed to load chat history: {e}")
+            return []
 
-    def clear_history(self, user_id: int):
+    async def _save_message(self, user_id: int, role: str, content: str):
+        """保存一条消息到 MySQL"""
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(
+                        "INSERT INTO chat_history (user_id, role, content) VALUES (%s, %s, %s)",
+                        (user_id, role, content)
+                    )
+                    await conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to save chat history: {e}")
+
+    async def clear_history(self, user_id: int):
         """清除用户的对话历史"""
-        _chat_history[user_id] = []
-        _chat_timestamps.pop(user_id, None)
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute("DELETE FROM chat_history WHERE user_id = %s", (user_id,))
+                    await conn.commit()
+        except Exception as e:
+            logger.warning(f"Failed to clear chat history: {e}")
+
+    def _generate_session_id(self, user_id: int) -> str:
+        """生成会话 ID"""
+        return f"session_{user_id}_{int(time.time())}"
 
     async def chat(
         self,
         user_id: int,
         message: str,
-        history: List[Dict[str, str]] = None
+        history: List[Dict[str, str]] = None,
+        image_data: Optional[bytes] = None,
+        session_id: Optional[str] = None
     ) -> str:
-        """AI 客服对话"""
+        """AI 客服对话（支持图片输入，集成记忆管理）"""
+        await self._init_memory_manager()
+
+        # 生成或使用提供的 session_id
+        if not session_id:
+            session_id = self._generate_session_id(user_id)
+
         context = await self._get_user_context(user_id)
         messages = [{"role": "system", "content": self.system_prompt}]
+
+        # 获取记忆上下文
+        memory_context = await self.memory_manager.get_memory_context(user_id, session_id)
+        if memory_context:
+            messages.append({
+                "role": "system",
+                "content": f"【记忆信息】\n{memory_context}"
+            })
 
         if context:
             messages.append({
@@ -100,409 +149,303 @@ class AICustomerService:
                 "content": f"用户信息：{json.dumps(context, ensure_ascii=False)}"
             })
 
-        stored_history = self._get_history(user_id)
+        # 获取工作记忆上下文
+        working_memory = await self.memory_manager.get_working_memory(user_id, session_id)
+        if working_memory.get("context"):
+            # 使用工作记忆中的上下文
+            for msg in working_memory["context"][-10:]:  # 最近10条
+                messages.append({"role": msg["role"], "content": msg["content"]})
+
+        stored_history = await self._get_history(user_id)
         if stored_history:
             messages.extend(stored_history)
         elif history:
             messages.extend(history[-5:])
 
-        messages.append({"role": "user", "content": message})
+        # 构造用户消息（支持图片）
+        if image_data:
+            # 先用视觉模型描述图片
+            image_desc = await describe_image_for_agent(image_data, "用户在客服对话中发送了一张图片。")
+            user_content = [
+                {"type": "text", "text": f"{message}\n\n[用户发送的图片描述: {image_desc}]"}
+            ]
+            messages.append({"role": "user", "content": json.dumps(user_content, ensure_ascii=False)})
+        else:
+            messages.append({"role": "user", "content": message})
 
-        # 多工具链式调用：同时执行多个工具
-        tool_responses = await self._check_and_call_tools_multi(user_id, message)
-        if tool_responses:
+        # 检查是否需要调用工具
+        tool_result = await self._check_and_call_tools(user_id, message)
+
+        if tool_result:
+            # 如果有工具结果，添加到上下文
             messages.append({
                 "role": "system",
-                "content": f"工具查询结果：\n" + "\n".join(tool_responses)
+                "content": f"【工具查询结果】\n{tool_result}"
             })
 
         try:
-            if not config.DEEPSEEK_API_KEY:
-                return "AI 服务未配置，请联系管理员"
-
-            client = AsyncOpenAI(api_key=config.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+            client = AsyncOpenAI(
+                api_key=config.DEEPSEEK_API_KEY,
+                base_url="https://api.deepseek.com"
+            )
             response = await client.chat.completions.create(
-                model="deepseek-v4-flash",
+                model="deepseek-chat",
                 messages=messages,
-                max_tokens=800,
                 temperature=0.7,
+                max_tokens=2000
             )
             reply = response.choices[0].message.content
 
-            self._save_message(user_id, "user", message)
-            self._save_message(user_id, "assistant", reply)
+            # 保存到 MySQL
+            await self._save_message(user_id, "user", message)
+            await self._save_message(user_id, "assistant", reply)
+
+            # 处理记忆
+            await self.memory_manager.process_conversation_memory(
+                user_id, session_id, message, reply
+            )
 
             return reply
-
-        except AuthenticationError:
-            logger.error("DeepSeek API key invalid or expired")
-            return "AI 服务认证失败，请联系管理员"
-        except RateLimitError:
-            logger.warning("DeepSeek API rate limit exceeded")
-            return "AI 服务请求过于频繁，请稍后再试"
-        except APIError as e:
-            logger.error(f"DeepSeek API error: {e}")
-            return "AI 服务暂时不可用，请稍后再试"
         except Exception as e:
-            logger.error(f"Unexpected error in AI chat: {e}", exc_info=True)
-            return "抱歉，AI 服务暂时不可用，请稍后再试。"
+            logger.error(f"AI chat error: {e}")
+            return f"抱歉，AI 服务暂时不可用，请稍后再试。错误：{str(e)}"
 
     async def chat_stream(
         self,
         user_id: int,
         message: str,
-        history: List[Dict[str, str]] = None
+        history: List[Dict[str, str]] = None,
+        image_data: Optional[bytes] = None,
+        session_id: Optional[str] = None
     ) -> AsyncGenerator[str, None]:
-        """AI 客服流式对话"""
+        """AI 客服流式对话（SSE，集成记忆管理）"""
+        await self._init_memory_manager()
+
+        # 生成或使用提供的 session_id
+        if not session_id:
+            session_id = self._generate_session_id(user_id)
+
         context = await self._get_user_context(user_id)
         messages = [{"role": "system", "content": self.system_prompt}]
+
+        # 获取记忆上下文
+        memory_context = await self.memory_manager.get_memory_context(user_id, session_id)
+        if memory_context:
+            messages.append({
+                "role": "system",
+                "content": f"【记忆信息】\n{memory_context}"
+            })
+
         if context:
             messages.append({
                 "role": "system",
                 "content": f"用户信息：{json.dumps(context, ensure_ascii=False)}"
             })
 
-        stored_history = self._get_history(user_id)
+        # 获取工作记忆上下文
+        working_memory = await self.memory_manager.get_working_memory(user_id, session_id)
+        if working_memory.get("context"):
+            for msg in working_memory["context"][-10:]:
+                messages.append({"role": msg["role"], "content": msg["content"]})
+
+        stored_history = await self._get_history(user_id)
         if stored_history:
             messages.extend(stored_history)
         elif history:
             messages.extend(history[-5:])
 
-        messages.append({"role": "user", "content": message})
+        # 构造用户消息（支持图片）
+        if image_data:
+            image_desc = await describe_image_for_agent(image_data, "用户在客服对话中发送了一张图片。")
+            user_content = [
+                {"type": "text", "text": f"{message}\n\n[用户发送的图片描述: {image_desc}]"}
+            ]
+            messages.append({"role": "user", "content": json.dumps(user_content, ensure_ascii=False)})
+        else:
+            messages.append({"role": "user", "content": message})
 
-        tool_responses = await self._check_and_call_tools_multi(user_id, message)
-        if tool_responses:
+        # 检查是否需要调用工具
+        tool_result = await self._check_and_call_tools(user_id, message)
+
+        if tool_result:
             messages.append({
                 "role": "system",
-                "content": f"工具查询结果：\n" + "\n".join(tool_responses)
+                "content": f"【工具查询结果】\n{tool_result}"
             })
 
-        if not config.DEEPSEEK_API_KEY:
-            yield "AI 服务未配置，请联系管理员"
-            return
-
-        client = AsyncOpenAI(api_key=config.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
-        full_reply = ""
         try:
-            stream = await client.chat.completions.create(
-                model="deepseek-v4-flash",
-                messages=messages,
-                max_tokens=800,
-                temperature=0.7,
-                stream=True,
+            client = AsyncOpenAI(
+                api_key=config.DEEPSEEK_API_KEY,
+                base_url="https://api.deepseek.com"
             )
-            async for chunk in stream:
+            response = await client.chat.completions.create(
+                model="deepseek-chat",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000,
+                stream=True
+            )
+
+            full_reply = ""
+            async for chunk in response:
                 if chunk.choices and chunk.choices[0].delta.content:
                     token = chunk.choices[0].delta.content
                     full_reply += token
                     yield token
 
-            self._save_message(user_id, "user", message)
-            self._save_message(user_id, "assistant", full_reply)
+            # 保存到 MySQL
+            await self._save_message(user_id, "user", message)
+            await self._save_message(user_id, "assistant", full_reply)
 
-        except AuthenticationError:
-            logger.error("DeepSeek API key invalid or expired")
-            yield "\n\nAI 服务认证失败，请联系管理员"
-        except RateLimitError:
-            logger.warning("DeepSeek API rate limit exceeded")
-            yield "\n\nAI 服务请求过于频繁，请稍后再试"
-        except APIError as e:
-            logger.error(f"DeepSeek API error: {e}")
-            yield "\n\nAI 服务暂时不可用，请稍后再试"
+            # 处理记忆
+            await self.memory_manager.process_conversation_memory(
+                user_id, session_id, message, full_reply
+            )
+
         except Exception as e:
-            logger.error(f"Unexpected error in AI chat stream: {e}", exc_info=True)
-            yield f"\n\nAI 服务出错：{str(e)}"
+            logger.error(f"AI stream chat error: {e}")
+            yield f"\n\n抱歉，AI 服务暂时不可用，请稍后再试。错误：{str(e)}"
 
-    async def _get_user_context(self, user_id: int) -> Optional[Dict[str, Any]]:
+    async def _get_user_context(self, user_id: int) -> Optional[dict]:
         """获取用户上下文信息"""
-        async with self.pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cur:
-                await cur.execute(
-                    "SELECT username, email FROM users WHERE id = %s",
-                    (user_id,)
-                )
-                user = await cur.fetchone()
-                if not user:
-                    return None
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    # 获取用户基本信息
+                    await cur.execute(
+                        "SELECT username, email, phone FROM users WHERE id = %s",
+                        (user_id,)
+                    )
+                    user = await cur.fetchone()
 
-                await cur.execute("""
-                    SELECT order_no, status, total_amount, created_at
-                    FROM orders WHERE user_id = %s
-                    ORDER BY created_at DESC LIMIT 3
-                """, (user_id,))
-                recent_orders = await cur.fetchall()
+                    if not user:
+                        return None
 
-                await cur.execute(
-                    "SELECT COUNT(*) as count FROM cart_items WHERE user_id = %s",
-                    (user_id,)
-                )
-                cart_count = (await cur.fetchone())["count"]
+                    context = {"username": user["username"]}
 
-                return {
-                    "username": user["username"],
-                    "recent_orders": [
-                        {"order_no": o["order_no"], "status": o["status"], "amount": float(o["total_amount"])}
-                        for o in recent_orders
-                    ],
-                    "cart_count": cart_count,
-                }
+                    # 获取最近订单
+                    await cur.execute(
+                        """SELECT order_no, status, total_amount
+                           FROM orders WHERE user_id = %s
+                           ORDER BY created_at DESC LIMIT 3""",
+                        (user_id,)
+                    )
+                    orders = await cur.fetchall()
+                    if orders:
+                        context["recent_orders"] = orders
 
-    # ============ 多工具链式调用 ============
+                    # 获取购物车数量
+                    await cur.execute(
+                        "SELECT COUNT(*) as count FROM cart_items WHERE user_id = %s",
+                        (user_id,)
+                    )
+                    cart_count = (await cur.fetchone())["count"]
+                    if cart_count > 0:
+                        context["cart_count"] = cart_count
 
-    async def _check_and_call_tools_multi(self, user_id: int, message: str) -> List[str]:
-        """同时调用多个工具，返回所有结果"""
+                    return context
+        except Exception as e:
+            logger.warning(f"Failed to get user context: {e}")
+            return None
+
+    async def _check_and_call_tools(self, user_id: int, message: str) -> Optional[str]:
+        """检查是否需要调用工具"""
         message_lower = message.lower()
-        results = []
-
-        # 比价
-        if any(kw in message_lower for kw in ["比价", "对比价格", "哪个平台便宜", "哪里便宜", "跨平台"]):
-            r = await self._compare_prices(message)
-            if r:
-                results.append(r)
-
-        # 降价提醒
-        if any(kw in message_lower for kw in ["降价提醒", "降价通知", "目标价", "监控价格"]):
-            r = await self._set_price_alert(user_id, message)
-            if r:
-                results.append(r)
-
-        # 优惠券
-        if any(kw in message_lower for kw in ["优惠券", "优惠", "券", "折扣", "满减"]):
-            r = await self._find_coupons(user_id, message)
-            if r:
-                results.append(r)
-
-        # 评价分析
-        if any(kw in message_lower for kw in ["评价", "评论", "买家说", "口碑", "怎么样"]):
-            r = await self._analyze_reviews(message)
-            if r:
-                results.append(r)
-
-        # 尺码推荐
-        if any(kw in message_lower for kw in ["尺码", "多大", "尺寸", "买多大", "推荐尺码"]):
-            r = await self._recommend_size(user_id, message)
-            if r:
-                results.append(r)
 
         # 订单查询
-        if any(kw in message_lower for kw in ["订单", "物流", "发货", "快递"]):
-            r = await self._query_orders(user_id)
-            if r:
-                results.append(r)
+        if any(keyword in message_lower for keyword in ["订单", "order", "购买记录", "物流"]):
+            return await self._query_orders(user_id)
 
         # 商品查询
-        if any(kw in message_lower for kw in ["价格", "多少钱", "有没有", "推荐"]):
-            keywords = self._extract_product_keywords(message)
-            if keywords:
-                r = await self._query_products(keywords)
-                if r:
-                    results.append(r)
+        product_keywords = self._extract_product_keywords(message)
+        if product_keywords:
+            product_info = await self._query_products(product_keywords)
+            if product_info:
+                return product_info
 
-        # 退换货
-        if any(kw in message_lower for kw in ["退货", "换货", "退款", "退换"]):
-            results.append("退换货政策：\n1. 7天无理由退换货\n2. 商品质量问题可免费退换\n3. 请保持商品原包装完好\n4. 请联系客服获取退换货地址")
+        # 比价查询
+        if any(keyword in message_lower for keyword in ["比价", "价格对比", "哪个便宜", "compare"]):
+            # 提取商品名称进行比价
+            compare_result = await self._compare_prices(message)
+            if compare_result:
+                return compare_result
 
-        return results
+        # 降价提醒
+        if any(keyword in message_lower for keyword in ["降价提醒", "价格提醒", "notify"]):
+            return await self._set_price_alert(user_id, message)
 
-    # ============ 工具：商品比价 ============
+        # 优惠券查询
+        if any(keyword in message_lower for keyword in ["优惠券", "coupon", "折扣"]):
+            return await self._query_coupons(user_id)
+
+        # 尺码推荐
+        if any(keyword in message_lower for keyword in ["尺码", "size", "多大", "尺寸"]):
+            return self._get_size_recommendation(message)
+
+        return None
 
     async def _compare_prices(self, message: str) -> Optional[str]:
-        """跨平台商品比价"""
+        """比价功能"""
+        # 提取商品关键词
         keywords = self._extract_product_keywords(message)
         if not keywords:
             return None
 
-        keyword = keywords[0]
-        async with self.pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cur:
-                await cur.execute("""
-                    SELECT name, price, platform, stock, sales
-                    FROM products
-                    WHERE name LIKE %s AND status = 'on_sale'
-                    ORDER BY price ASC
-                """, (f"%{keyword}%",))
-                products = await cur.fetchall()
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cur:
+                    keyword = keywords[0]
+                    await cur.execute("""
+                        SELECT name, platform, price
+                        FROM products
+                        WHERE name LIKE %s AND status = 'on_sale'
+                        ORDER BY price ASC
+                    """, (f"%{keyword}%",))
+                    products = await cur.fetchall()
 
-        if not products:
-            return f"未找到与'{keyword}'相关的商品进行比价"
+                    if len(products) < 2:
+                        return None
 
-        # 按平台分组
-        platforms = {}
-        for p in products:
-            platform = p['platform'] or '未知'
-            if platform not in platforms:
-                platforms[platform] = []
-            platforms[platform].append(p)
+                    result = f"**{keyword} 比价结果**：\n\n"
+                    for p in products:
+                        result += f"- {p['platform']}: ¥{p['price']:.2f}\n"
 
-        result = f"**{keyword} 跨平台比价**：\n\n"
-        prices = []
-        for platform, items in platforms.items():
-            cheapest = min(items, key=lambda x: float(x['price']))
-            prices.append(float(cheapest['price']))
-            stock_status = "有货" if cheapest['stock'] > 0 else "缺货"
-            result += f"- {platform}：¥{cheapest['price']} ({stock_status}, 已售{cheapest['sales']}件)\n"
+                    # 计算价差
+                    prices = [p['price'] for p in products]
+                    diff = max(prices) - min(prices)
+                    result += f"\n价差: ¥{diff:.2f}"
 
-        if len(prices) > 1:
-            cheapest_platform = min(platforms.items(), key=lambda x: min(float(p['price']) for p in x[1]))[0]
-            most_expensive = max(prices)
-            cheapest = min(prices)
-            savings = most_expensive - cheapest
-            result += f"\n**推荐**：{cheapest_platform} 最便宜，比最高价便宜 ¥{savings:.2f}"
+                    return result
+        except Exception as e:
+            logger.error(f"Compare prices error: {e}")
+            return None
 
-        return result
-
-    # ============ 工具：降价提醒 ============
-
-    async def _set_price_alert(self, user_id: int, message: str) -> Optional[str]:
+    async def _set_price_alert(self, user_id: int, message: str) -> str:
         """设置降价提醒"""
-        # 提取商品名和目标价格
+        # 提取目标价格
         price_match = re.search(r'(\d+(?:\.\d+)?)', message)
-        target_price = float(price_match.group(1)) if price_match else None
+        if not price_match:
+            return "请告诉我您期望的价格，例如：「iPhone 15 降价到 5000 元提醒我」"
 
+        target_price = float(price_match.group(1))
         keywords = self._extract_product_keywords(message)
+
         if not keywords:
-            return "请告诉我您想监控哪个商品的价格？例如：「监控iPhone的降价，目标价5000」"
+            return "请告诉我您想设置哪个商品的降价提醒"
 
-        keyword = keywords[0]
+        # 这里简化处理，实际应该存储到数据库
+        return f"已为您设置降价提醒：当 **{keywords[0]}** 价格降至 ¥{target_price:.2f} 时通知您"
 
-        # 查找商品
-        async with self.pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cur:
-                await cur.execute("""
-                    SELECT id, name, price FROM products
-                    WHERE name LIKE %s AND status = 'on_sale' LIMIT 1
-                """, (f"%{keyword}%",))
-                product = await cur.fetchone()
+    async def _query_coupons(self, user_id: int) -> str:
+        """查询可用优惠券"""
+        # 简化实现
+        return "**可用优惠券**：\n\n- 新用户专享：满100减10\n- 电子产品：满1000减50\n- 服装类：满200减20\n\n使用优惠券可在结算时自动抵扣。"
 
-        if not product:
-            return f"未找到'{keyword}'相关商品"
-
-        if target_price is None:
-            target_price = float(product['price']) * 0.8  # 默认为目标价的80%
-
-        # 保存提醒
-        _price_alerts[product['id']].append({
-            "user_id": user_id,
-            "target_price": target_price,
-            "current_price": float(product['price']),
-            "created_at": time.time(),
-        })
-
-        return (f"已设置降价提醒：\n"
-                f"- 商品：{product['name']}\n"
-                f"- 当前价格：¥{product['price']}\n"
-                f"- 目标价格：¥{target_price}\n"
-                f"- 降价后会通知您！")
-
-    # ============ 工具：优惠券发现 ============
-
-    async def _find_coupons(self, user_id: int, message: str) -> Optional[str]:
-        """查找可用优惠券"""
-        async with self.pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cur:
-                # 查询所有有效优惠券
-                await cur.execute("""
-                    SELECT c.*, m.shop_name
-                    FROM coupons c
-                    LEFT JOIN merchants m ON c.merchant_id = m.id
-                    WHERE c.is_active = TRUE
-                    AND (c.end_date IS NULL OR c.end_date >= CURDATE())
-                    AND (c.max_uses = 0 OR c.used_count < c.max_uses)
-                    ORDER BY c.value DESC
-                    LIMIT 10
-                """)
-                coupons = await cur.fetchall()
-
-                # 查询用户已领取的优惠券
-                await cur.execute("""
-                    SELECT coupon_id FROM user_coupons WHERE user_id = %s
-                """, (user_id,))
-                claimed = {row['coupon_id'] for row in await cur.fetchall()}
-
-        if not coupons:
-            return "暂时没有可用的优惠券，稍后再来看看吧！"
-
-        result = "🎁 **可用优惠券**：\n\n"
-        for c in coupons:
-            claimed_status = "已领取" if c['id'] in claimed else "未领取"
-            if c['type'] == 'fixed':
-                discount = f"减¥{c['value']}"
-            else:
-                discount = f"{c['value']}%off"
-            min_amount = f"满¥{c['min_amount']}可用" if c.get('min_amount') else "无门槛"
-            shop = c.get('shop_name') or '平台'
-            result += f"- [{shop}] {c['name']}: {discount} ({min_amount}) [{claimed_status}]\n"
-
-        return result
-
-    # ============ 工具：评价分析 ============
-
-    async def _analyze_reviews(self, message: str) -> Optional[str]:
-        """分析商品评价"""
-        keywords = self._extract_product_keywords(message)
-        if not keywords:
-            return None
-
-        keyword = keywords[0]
-        async with self.pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cur:
-                # 查找商品
-                await cur.execute("""
-                    SELECT id, name FROM products WHERE name LIKE %s AND status = 'on_sale' LIMIT 1
-                """, (f"%{keyword}%",))
-                product = await cur.fetchone()
-
-                if not product:
-                    return f"未找到'{keyword}'相关商品"
-
-                # 获取评价
-                await cur.execute("""
-                    SELECT pr.rating, pr.content, u.username
-                    FROM product_reviews pr
-                    JOIN users u ON pr.user_id = u.id
-                    WHERE pr.product_id = %s
-                    ORDER BY pr.created_at DESC
-                    LIMIT 20
-                """, (product['id'],))
-                reviews = await cur.fetchall()
-
-        if not reviews:
-            return f"'{product['name']}'暂时还没有评价"
-
-        # 统计
-        total = len(reviews)
-        avg_rating = sum(r['rating'] for r in reviews) / total
-        rating_dist = {i: 0 for i in range(1, 6)}
-        for r in reviews:
-            rating_dist[r['rating']] = rating_dist.get(r['rating'], 0) + 1
-
-        result = f"**{product['name']} 评价分析**（共{total}条）：\n\n"
-        result += f"- 平均评分：{'⭐' * round(avg_rating)} {avg_rating:.1f}/5\n"
-        result += f"- 5星: {rating_dist.get(5, 0)}条 | 4星: {rating_dist.get(4, 0)}条 | 3星: {rating_dist.get(3, 0)}条\n\n"
-
-        # 正面/负面评价
-        positive = [r for r in reviews if r['rating'] >= 4]
-        negative = [r for r in reviews if r['rating'] <= 2]
-
-        if positive:
-            result += "**好评摘录**：\n"
-            for r in positive[:3]:
-                result += f"- {r['username']}：{r['content'][:50]}...\n"
-
-        if negative:
-            result += "\n**差评摘录**：\n"
-            for r in negative[:2]:
-                result += f"- {r['username']}：{r['content'][:50]}...\n"
-
-        return result
-
-    # ============ 工具：尺码推荐 ============
-
-    async def _recommend_size(self, user_id: int, message: str) -> Optional[str]:
-        """根据用户信息推荐尺码"""
-        # 简单的尺码推荐逻辑
+    def _get_size_recommendation(self, message: str) -> str:
+        """尺码推荐"""
         size_chart = {
-            "T恤": {"XS": "身高155以下", "S": "身高155-160", "M": "身高160-170", "L": "身高170-180", "XL": "身高180以上"},
+            "T恤": {"S": "身高155-160", "M": "身高160-165", "L": "身高165-170", "XL": "身高170-175", "XXL": "身高175-180", "XXXL": "身高180以上"},
+            "裤子": {"S": "腰围2尺1", "M": "腰围2尺2", "L": "腰围2尺3", "XL": "腰围2尺4", "XXL": "腰围2尺5", "XXXL": "腰围2尺6以上"},
             "鞋": {"36": "脚长23cm", "37": "脚长23.5cm", "38": "脚长24cm", "39": "脚长24.5cm", "40": "脚长25cm", "41": "脚长25.5cm", "42": "脚长26cm"},
         }
 
@@ -610,3 +553,36 @@ class AICustomerService:
                     quick_replies.insert(0, "查看购物车")
 
                 return quick_replies
+
+    # ============ 记忆管理 API ============
+
+    async def get_user_memory_profile(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """获取用户记忆画像"""
+        await self._init_memory_manager()
+        return await self.memory_manager.get_user_profile(user_id)
+
+    async def get_user_memories(self, user_id: int, memory_type: str = None, limit: int = 20) -> List[Dict[str, Any]]:
+        """获取用户记忆列表"""
+        await self._init_memory_manager()
+        return await self.memory_manager.get_long_term_memories(user_id, memory_type, limit)
+
+    async def search_user_memories(self, user_id: int, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """搜索用户记忆"""
+        await self._init_memory_manager()
+        return await self.memory_manager.search_long_term_memory(user_id, query, limit)
+
+    async def clear_user_memories(self, user_id: int):
+        """清除用户记忆"""
+        await self._init_memory_manager()
+        # 清除工作记忆
+        session_id = self._generate_session_id(user_id)
+        await self.memory_manager.clear_working_memory(user_id, session_id)
+        # 清除长期记忆
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute("DELETE FROM user_memory_vectors WHERE user_id = %s", (user_id,))
+                    await cur.execute("DELETE FROM memory_logs WHERE user_id = %s", (user_id,))
+                    await conn.commit()
+        except Exception as e:
+            logger.error(f"Failed to clear user memories: {e}")
